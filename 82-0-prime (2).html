@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>82-0 — Prime Year Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Inter:wght@400;500;600&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --court: #0a0a0f;
+    --surface: #13131a;
+    --card: #1c1c26;
+    --card-hover: #22222f;
+    --border: rgba(255,255,255,0.08);
+    --border-active: rgba(255,255,255,0.18);
+    --gold: #f5c842;
+    --gold-dim: rgba(245,200,66,0.12);
+    --gold-mid: rgba(245,200,66,0.35);
+    --orange: #ff6b2b;
+    --orange-dim: rgba(255,107,43,0.12);
+    --green: #2ecc71;
+    --green-dim: rgba(46,204,113,0.12);
+    --red: #e74c3c;
+    --red-dim: rgba(231,76,60,0.12);
+    --blue: #4a9eff;
+    --blue-dim: rgba(74,158,255,0.12);
+    --purple: #9b59b6;
+    --purple-dim: rgba(155,89,182,0.12);
+    --text-primary: #f0f0f0;
+    --text-secondary: rgba(240,240,240,0.5);
+    --text-muted: rgba(240,240,240,0.28);
+    --font-display: 'Barlow Condensed', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-copy: 'Barlow', sans-serif;
+    --r: 10px;
+    --r-lg: 16px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--court);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Subtle court lines in background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 79px, rgba(255,255,255,0.015) 80px),
+      repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(255,255,255,0.015) 80px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+
+  /* ── Header ── */
+  .header {
+    padding: 36px 0 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+
+  .header-eyebrow {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .header-title {
+    font-family: var(--font-display);
+    font-size: clamp(52px, 10vw, 84px);
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -1px;
+    color: var(--text-primary);
+  }
+
+  .header-title span {
+    color: var(--gold);
+  }
+
+  .header-sub {
+    font-family: var(--font-copy);
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-top: 12px;
+    max-width: 520px;
+    line-height: 1.5;
+  }
+
+  .header-rule {
+    display: inline-block;
+    background: var(--gold);
+    height: 3px;
+    width: 36px;
+    border-radius: 2px;
+    margin-bottom: 10px;
+  }
+
+  /* ── Round tracker ── */
+  .round-track {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+
+  .round-label {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-right: 4px;
+  }
+
+  .round-pip {
+    width: 32px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+
+  .round-pip.done { background: var(--green); }
+  .round-pip.active { background: var(--gold); }
+
+  /* ── Roster row ── */
+  .roster-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+
+  .r-slot {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 10px 8px;
+    text-align: center;
+    min-height: 78px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s;
+  }
+
+  .r-slot.selectable {
+    cursor: pointer;
+  }
+
+  .r-slot.selectable:hover {
+    border-color: var(--gold);
+    background: var(--card-hover);
+  }
+
+  .r-slot.filled {
+    background: var(--card);
+    border-color: var(--border-active);
+  }
+
+  .r-slot.move-source {
+    border-color: var(--gold);
+    background: var(--gold-dim);
+  }
+
+  .r-slot.place-target {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 1px var(--gold-mid) inset;
+  }
+
+  .r-slot-pos {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  .r-slot-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.3;
+    text-align: center;
+  }
+
+  .r-slot-year {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    font-family: var(--font-display);
+    letter-spacing: 0.5px;
+  }
+
+  .r-slot-empty {
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .r-slot-action {
+    font-family: var(--font-display);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-top: 5px;
+  }
+
+  .draft-score-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: -14px 0 28px;
+  }
+
+  /* ── Slot machine ── */
+  .slot-machine {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 28px 24px;
+    text-align: center;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slot-machine::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--gold);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .slot-machine.active::before { opacity: 1; }
+
+  .slot-era-label {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .slot-main {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s;
+  }
+
+  .slot-main.spinning {
+    color: var(--gold);
+    animation: flicker 0.07s steps(1) infinite;
+  }
+
+  @keyframes flicker {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .slot-instruction {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 6px;
+    font-family: var(--font-copy);
+  }
+
+  /* ── Buttons ── */
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+
+  .btn {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 11px 22px;
+    border-radius: var(--r);
+    border: 1px solid var(--border-active);
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s, opacity 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .btn:hover:not(:disabled) { background: rgba(255,255,255,0.06); }
+  .btn:active:not(:disabled) { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .btn-primary {
+    background: var(--gold);
+    color: #0a0a0f;
+    border-color: var(--gold);
+    font-size: 15px;
+    padding: 13px 28px;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: #f7d458;
+    border-color: #f7d458;
+  }
+
+  .btn-skip {
+    font-size: 12px;
+    padding: 8px 16px;
+    color: var(--text-secondary);
+    border-color: var(--border);
+  }
+
+  .btn-skip .skip-count {
+    font-size: 10px;
+    opacity: 0.6;
+    font-weight: 400;
+  }
+
+  /* ── Player cards ── */
+  .player-section-label {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .player-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .player-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 16px 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .player-card:hover { border-color: var(--border-active); background: var(--card-hover); transform: translateY(-2px); }
+
+  .player-card.selected {
+    border-color: var(--gold);
+    background: var(--gold-dim);
+  }
+
+  .player-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 14px;
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  .player-card.unavailable {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .player-card.needs-position {
+    border-color: var(--gold);
+    background: var(--gold-dim);
+  }
+
+  .pc-name {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.1;
+    margin-bottom: 3px;
+  }
+
+  .pc-meta {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+
+  .pc-prime {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-family: var(--font-copy);
+    margin-bottom: 12px;
+    line-height: 1.4;
+    border-left: 2px solid var(--gold-mid);
+    padding-left: 8px;
+    font-style: italic;
+  }
+
+  .pos-pick-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .pos-pick-label {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    width: 100%;
+  }
+
+  .pos-pick-btn {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #0a0a0f;
+    background: var(--gold);
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    padding: 5px 8px;
+    cursor: pointer;
+  }
+
+  .pos-pick-btn:hover {
+    background: #f7d458;
+    border-color: #f7d458;
+  }
+
+  .pos-lock-note {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  /* Stat bars */
+  .stat-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 5px;
+  }
+
+  .stat-lbl {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    width: 28px;
+    flex-shrink: 0;
+  }
+
+  .stat-track {
+    flex: 1;
+    height: 5px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .stat-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  .sf-scr { background: var(--orange); }
+  .sf-def { background: var(--blue); }
+  .sf-reb { background: var(--green); }
+  .sf-ply { background: var(--purple); }
+
+  .stat-num {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    width: 26px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .pc-ppg {
+    margin-top: 10px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .pc-ppg span {
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+
+  /* ── Sim screen ── */
+  .sim-screen {
+    padding: 40px 0;
+    text-align: center;
+  }
+
+  .sim-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+  }
+
+  .sim-record {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 10vw, 72px);
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .sim-game-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-family: var(--font-copy);
+    margin-bottom: 24px;
+  }
+
+  .sim-bar-wrap {
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .sim-bar-fill {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 4px;
+    width: 0;
+    transition: width 0.03s linear;
+  }
+
+  /* ── Result screen ── */
+  .result-screen {
+    padding: 20px 0;
+  }
+
+  .result-record-big {
+    font-family: var(--font-display);
+    font-size: clamp(64px, 14vw, 108px);
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -3px;
+  }
+
+  .result-record-big.perfect { color: var(--gold); }
+  .result-record-big.great { color: var(--green); }
+  .result-record-big.good { color: var(--blue); }
+  .result-record-big.ok { color: var(--orange); }
+  .result-record-big.bad { color: var(--red); }
+
+  .result-grade {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 16px;
+    border-radius: 6px;
+    margin: 14px 0 8px;
+  }
+
+  .grade-S { background: rgba(245,200,66,0.15); color: var(--gold); border: 1px solid rgba(245,200,66,0.3); }
+  .grade-A { background: rgba(46,204,113,0.12); color: var(--green); border: 1px solid rgba(46,204,113,0.3); }
+  .grade-B { background: rgba(74,158,255,0.12); color: var(--blue); border: 1px solid rgba(74,158,255,0.3); }
+  .grade-C { background: rgba(255,107,43,0.12); color: var(--orange); border: 1px solid rgba(255,107,43,0.3); }
+  .grade-D { background: rgba(231,76,60,0.12); color: var(--red); border: 1px solid rgba(231,76,60,0.3); }
+
+  .result-verdict {
+    font-family: var(--font-copy);
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+    max-width: 480px;
+  }
+
+  .section-label {
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .result-roster-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+
+  .result-player-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 12px 10px;
+    text-align: center;
+  }
+
+  .rpc-pos {
+    font-family: var(--font-display);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 5px;
+  }
+
+  .rpc-name {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.2;
+    margin-bottom: 3px;
+  }
+
+  .rpc-year {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: var(--font-copy);
+  }
+
+  .roster-score-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+
+  .score-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 12px 10px;
+    text-align: center;
+  }
+
+  .score-pill-label {
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .score-pill-val {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+
+  .weakness-box {
+    background: rgba(255,107,43,0.08);
+    border: 1px solid rgba(255,107,43,0.2);
+    border-radius: var(--r);
+    padding: 12px 16px;
+    font-size: 13px;
+    color: rgba(255,150,100,0.9);
+    font-family: var(--font-copy);
+    margin-bottom: 28px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .weakness-icon {
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .game-log {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 16px;
+    margin-bottom: 28px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .log-entry {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-family: var(--font-copy);
+    color: var(--text-secondary);
+  }
+
+  .log-entry:last-child { border-bottom: none; }
+
+  .log-result {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    width: 18px;
+  }
+
+  .log-w { color: var(--green); }
+  .log-l { color: var(--red); }
+
+  .log-margin {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 13px;
+    margin-left: auto;
+    color: var(--text-muted);
+  }
+
+  /* ── Utility ── */
+  .hidden { display: none !important; }
+
+  @media (max-width: 520px) {
+    .roster-row { grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    .r-slot { padding: 8px 4px; min-height: 64px; }
+    .r-slot-name { font-size: 9px; }
+    .player-grid { grid-template-columns: 1fr 1fr; }
+    .result-roster-grid { grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    .rpc-name { font-size: 10px; }
+    .roster-score-row { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-rule"></div>
+    <div class="header-eyebrow">Prime Year Edition</div>
+    <div class="header-title">82<span>-0</span></div>
+    <p class="header-sub">Each player is locked to their single greatest season — not a career average, not a decade blend. Their true prime. Draft five legends and see if you can go undefeated.</p>
+  </header>
+
+  <!-- Draft screen -->
+  <div id="screen-draft">
+
+    <div class="round-track" id="round-track"></div>
+    <div class="roster-row" id="roster-row"></div>
+    <div class="draft-score-row hidden" id="draft-score-row"></div>
+
+    <div class="slot-machine" id="slot-machine">
+      <div class="slot-era-label" id="slot-era-lbl">Ready</div>
+      <div class="slot-main" id="slot-main">Spin to begin</div>
+      <div class="slot-instruction" id="slot-instruction">Each spin reveals a franchise + era. You pick one player from that pool.</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="spin-btn">&#9654; Spin</button>
+      <button class="btn btn-skip" id="skip-era-btn" disabled>
+        Skip era <span class="skip-count" id="era-ct">(1 left)</span>
+      </button>
+      <button class="btn btn-skip" id="skip-team-btn" disabled>
+        Skip team <span class="skip-count" id="team-ct">(1 left)</span>
+      </button>
+      <button class="btn btn-primary hidden" id="sim-btn">Sim season</button>
+    </div>
+
+    <div id="player-section" class="hidden">
+      <div class="player-section-label" id="player-section-lbl">Choose one player</div>
+      <div class="player-grid" id="player-grid"></div>
+    </div>
+
+  </div>
+
+  <!-- Sim screen -->
+  <div id="screen-sim" class="hidden">
+    <div class="sim-screen">
+      <div class="sim-title">Simulating Season</div>
+      <div class="sim-record" id="sim-record">0 – 0</div>
+      <div class="sim-game-label" id="sim-game-lbl">Game 1 of 82</div>
+      <div class="sim-bar-wrap"><div class="sim-bar-fill" id="sim-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- Result screen -->
+  <div id="screen-result" class="hidden">
+    <div class="result-screen">
+      <div class="section-label">Final record</div>
+      <div class="result-record-big" id="result-record"></div>
+      <div class="result-grade" id="result-grade"></div>
+      <p class="result-verdict" id="result-verdict"></p>
+
+      <div class="section-label">Your prime-year starting five</div>
+      <div class="result-roster-grid" id="result-roster"></div>
+
+      <div class="section-label">Team totals</div>
+      <div class="roster-score-row" id="score-row"></div>
+
+      <div id="weakness-box" class="weakness-box hidden">
+        <span class="weakness-icon">&#9888;</span>
+        <span id="weakness-text"></span>
+      </div>
+
+      <div class="section-label">Hardest games of the season</div>
+      <div class="game-log" id="game-log"></div>
+
+      <div class="btn-row" style="margin-top:24px">
+        <button class="btn btn-primary" id="play-again-btn">&#9654; Play again</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+const POSITIONS = ['PG','SG','SF','PF','C'];
+
+// Each player has:
+//   n: name, pos: position, yr: prime season, why: one-line prime reason
+//   s: scoring (0-99), d: defense (0-99), r: rebounding (0-99), p: playmaking (0-99)
+//   ppg: peak PPG, rpg: peak RPG, apg: peak APG
+
+const DB = {
+  '1960s_Celtics': [
+    { n:'Bill Russell', pos:'C', yr:'1961–62', why:'24.9 RPG — the greatest rebounding season in NBA history',
+      s:20, d:99, r:99, p:32, ppg:18.9, rpg:24.9, apg:4.5 },
+    { n:'Bob Cousy', pos:'PG', yr:'1959–60', why:'Led the league in assists for the 8th straight year at his peak',
+      s:58, d:60, r:38, p:96, ppg:19.4, rpg:4.6, apg:9.5 },
+    { n:'Tom Heinsohn', pos:'PF', yr:'1961–62', why:'22.1 PPG at his scoring peak on title-winning Celtics',
+      s:68, d:52, r:68, p:42, ppg:22.1, rpg:10.0, apg:2.4 },
+    { n:'Sam Jones', pos:'SG', yr:'1964–65', why:'25.9 PPG — his finest individual scoring season',
+      s:75, d:62, r:36, p:52, ppg:25.9, rpg:4.1, apg:4.4 },
+  ],
+  '1960s_Warriors': [
+    { n:'Wilt Chamberlain', pos:'C', yr:'1961–62', why:'100-point game. 50.4 PPG. 25.7 RPG. Simply unprecedented',
+      s:99, d:75, r:99, p:50, ppg:50.4, rpg:25.7, apg:2.4 },
+    { n:'Nate Thurmond', pos:'PF', yr:'1966–67', why:'22.0 RPG at his defensive prime — elite interior anchor',
+      s:52, d:85, r:90, p:38, ppg:19.0, rpg:22.0, apg:2.2 },
+    { n:'Jeff Mullins', pos:'SG', yr:'1968–69', why:'22.8 PPG — career-best scoring as franchise go-to',
+      s:68, d:55, r:32, p:55, ppg:22.8, rpg:4.6, apg:4.8 },
+    { n:'Guy Rodgers', pos:'PG', yr:'1962–63', why:'10.4 APG — top-tier passer in his finest playmaking season',
+      s:48, d:55, r:32, p:90, ppg:13.5, rpg:3.8, apg:10.4 },
+  ],
+  '1960s_Lakers': [
+    { n:'Elgin Baylor', pos:'SF', yr:'1961–62', why:'38.3 PPG — third-highest single-season scoring average ever',
+      s:96, d:60, r:85, p:62, ppg:38.3, rpg:18.6, apg:4.6 },
+    { n:'Jerry West', pos:'SG', yr:'1965–66', why:'31.3 PPG — career best, anointing him among game\'s elite',
+      s:92, d:80, r:46, p:78, ppg:31.3, rpg:7.1, apg:6.1 },
+    { n:'Gail Goodrich', pos:'PG', yr:'1969–70', why:'24.1 PPG to close the decade as rising franchise star',
+      s:68, d:52, r:34, p:62, ppg:24.1, rpg:3.8, apg:6.0 },
+    { n:'Leroy Ellis', pos:'C', yr:'1965–66', why:'Defensive-minded center who anchored Laker frontcourts',
+      s:35, d:70, r:78, p:22, ppg:10.2, rpg:11.0, apg:1.1 },
+  ],
+  '1970s_Bucks': [
+    { n:'Kareem Abdul-Jabbar', pos:'C', yr:'1971–72', why:'34.8 PPG, 16.6 RPG — peak Kareem at his most unstoppable',
+      s:96, d:80, r:94, p:62, ppg:34.8, rpg:16.6, apg:4.6 },
+    { n:'Oscar Robertson', pos:'PG', yr:'1970–71', why:'Championship season; passing, leadership, and IQ at their zenith',
+      s:80, d:70, r:58, p:95, ppg:19.4, rpg:5.7, apg:8.2 },
+    { n:'Bob Dandridge', pos:'SF', yr:'1975–76', why:'24.0 PPG with elite two-way versatility — his best season',
+      s:72, d:70, r:62, p:52, ppg:24.0, rpg:6.8, apg:3.4 },
+    { n:'Jon McGlocklin', pos:'SG', yr:'1970–71', why:'19.5 PPG shooter who gave this offense perfect spacing',
+      s:62, d:52, r:30, p:50, ppg:19.5, rpg:2.9, apg:3.0 },
+  ],
+  '1970s_Lakers': [
+    { n:'Jerry West', pos:'PG', yr:'1971–72', why:'25.8 PPG leading 69-win Lakers — his final, perfect season',
+      s:88, d:80, r:44, p:85, ppg:25.8, rpg:4.0, apg:9.7 },
+    { n:'Wilt Chamberlain', pos:'C', yr:'1971–72', why:'Led NBA in FG% (.649) on historic 69-win championship team',
+      s:75, d:80, r:93, p:48, ppg:14.8, rpg:19.2, apg:4.0 },
+    { n:'Gail Goodrich', pos:'SG', yr:'1971–72', why:'25.9 PPG — finest scoring season, key to 69-win title run',
+      s:78, d:54, r:36, p:62, ppg:25.9, rpg:3.6, apg:5.5 },
+    { n:'Happy Hairston', pos:'PF', yr:'1971–72', why:'Led team in rebounding at 13.1 RPG, unsung title piece',
+      s:48, d:52, r:80, p:28, ppg:13.1, rpg:13.1, apg:1.1 },
+  ],
+  '1970s_76ers': [
+    { n:'Julius Erving', pos:'SF', yr:'1976–77', why:'21.6 PPG with breathtaking athleticism in his ABA-to-NBA prime',
+      s:90, d:72, r:78, p:68, ppg:21.6, rpg:8.5, apg:3.7 },
+    { n:'George McGinnis', pos:'PF', yr:'1975–76', why:'23.0 PPG, 12.6 RPG, 4.7 APG — bruising point-forward power at his peak',
+      s:82, d:62, r:88, p:68, ppg:23.0, rpg:12.6, apg:4.7 },
+    { n:'Darryl Dawkins', pos:'C', yr:'1979–80', why:'Backboard-shattering center at his most dominant stretch',
+      s:56, d:68, r:70, p:28, ppg:14.1, rpg:8.7, apg:1.2 },
+    { n:'Doug Collins', pos:'PG', yr:'1975–76', why:'20.8 PPG at his offensive peak — a lightning-quick guard',
+      s:72, d:62, r:38, p:62, ppg:20.8, rpg:3.1, apg:5.5 },
+  ],
+  '1980s_Lakers': [
+    { n:'Magic Johnson', pos:'PG', yr:'1986–87', why:'23.9 PPG, 12.2 APG, MVP — his most complete individual season',
+      s:82, d:68, r:68, p:99, ppg:23.9, rpg:6.3, apg:12.2 },
+    { n:'Kareem Abdul-Jabbar', pos:'C', yr:'1980–81', why:'26.2 PPG in his final MVP-caliber season with the skyhook at its purest',
+      s:88, d:82, r:84, p:58, ppg:26.2, rpg:10.3, apg:3.4 },
+    { n:'James Worthy', pos:'SF', yr:'1987–88', why:'19.7 PPG + Finals MVP — peak efficiency and big-game brilliance',
+      s:78, d:68, r:62, p:58, ppg:19.7, rpg:5.7, apg:3.0 },
+    { n:'Byron Scott', pos:'SG', yr:'1987–88', why:'21.7 PPG — career-best scoring on back-to-back champion Lakers',
+      s:68, d:65, r:34, p:55, ppg:21.7, rpg:3.2, apg:3.1 },
+  ],
+  '1980s_Celtics': [
+    { n:'Larry Bird', pos:'SF', yr:'1984–85', why:'28.7 PPG, 10.5 RPG, 6.6 APG — his best all-around statistical season',
+      s:94, d:68, r:88, p:88, ppg:28.7, rpg:10.5, apg:6.6 },
+    { n:'Kevin McHale', pos:'PF', yr:'1986–87', why:'26.1 PPG, 58.4 FG% — perhaps the most unstoppable low-post season ever',
+      s:88, d:72, r:78, p:48, ppg:26.1, rpg:9.9, apg:2.7 },
+    { n:'Robert Parish', pos:'C', yr:'1981–82', why:'19.9 PPG, 10.8 RPG — elite two-way center at his absolute prime',
+      s:72, d:72, r:85, p:40, ppg:19.9, rpg:10.8, apg:2.1 },
+    { n:'Dennis Johnson', pos:'PG', yr:'1984–85', why:'16.5 PPG and lockdown perimeter defense at his finest',
+      s:62, d:88, r:42, p:72, ppg:16.5, rpg:3.9, apg:6.7 },
+  ],
+  '1980s_76ers': [
+    { n:'Moses Malone', pos:'C', yr:'1982–83', why:'24.5 PPG, 15.3 RPG, MVP — "fo, fo, fo" championship demolition',
+      s:88, d:72, r:97, p:48, ppg:24.5, rpg:15.3, apg:1.3 },
+    { n:'Julius Erving', pos:'SF', yr:'1982–83', why:'21.4 PPG leading title run — Dr. J orchestrating championship glory',
+      s:82, d:72, r:68, p:68, ppg:21.4, rpg:6.8, apg:3.6 },
+    { n:'Maurice Cheeks', pos:'PG', yr:'1982–83', why:'12 APG, 2.6 SPG — elite facilitating point guard in title year',
+      s:56, d:82, r:40, p:78, ppg:12.5, rpg:3.0, apg:6.4 },
+    { n:'Andrew Toney', pos:'SG', yr:'1982–83', why:'19.3 PPG — "The Boston Strangler," money in big moments',
+      s:75, d:58, r:36, p:58, ppg:19.3, rpg:2.5, apg:3.2 },
+  ],
+  '1990s_Bulls': [
+    { n:'Michael Jordan', pos:'SG', yr:'1995–96', why:'30.4 PPG, MVP, Defensive POY finalist — most complete season of his career on a 72-win team',
+      s:99, d:95, r:62, p:70, ppg:30.4, rpg:6.6, apg:4.3 },
+    { n:'Scottie Pippen', pos:'SF', yr:'1993–94', why:'22 PPG, 8.7 RPG, 5.6 APG with Jordan gone — proved he was a top-3 player',
+      s:82, d:92, r:78, p:85, ppg:22.0, rpg:8.7, apg:5.6 },
+    { n:'Dennis Rodman', pos:'PF', yr:'1995–96', why:'14.9 RPG — his second of 7 straight rebounding titles, elite defensive anchor',
+      s:24, d:90, r:99, p:30, ppg:5.5, rpg:14.9, apg:2.5 },
+    { n:'Toni Kukoc', pos:'SF', yr:'1995–96', why:'13.1 PPG off the bench — the most dangerous sixth man in the league',
+      s:65, d:55, r:48, p:70, ppg:13.1, rpg:4.7, apg:3.5 },
+  ],
+  '1990s_Jazz': [
+    { n:'Karl Malone', pos:'PF', yr:'1996–97', why:'27.4 PPG, 9.9 RPG, MVP — the Mailman at his most dominant',
+      s:92, d:72, r:88, p:52, ppg:27.4, rpg:9.9, apg:4.5 },
+    { n:'John Stockton', pos:'PG', yr:'1993–94', why:'12.6 APG, 3.2 SPG — the greatest passing and stealing season in NBA history',
+      s:62, d:78, r:50, p:99, ppg:17.0, rpg:3.0, apg:12.6 },
+    { n:'Jeff Hornacek', pos:'SG', yr:'1994–95', why:'14.8 PPG with 89% FT% — clutch, efficient spacing weapon',
+      s:68, d:65, r:38, p:60, ppg:14.8, rpg:3.3, apg:4.1 },
+    { n:'Greg Ostertag', pos:'C', yr:'1999–00', why:'Defensive-first rim protector who kept the lane clear for Malone',
+      s:28, d:75, r:72, p:20, ppg:5.3, rpg:6.5, apg:0.8 },
+  ],
+  '1990s_Spurs': [
+    { n:'David Robinson', pos:'C', yr:'1993–94', why:'29.8 PPG, 10.7 RPG, MVP — The Admiral\'s finest individual season',
+      s:88, d:90, r:92, p:52, ppg:29.8, rpg:10.7, apg:4.8 },
+    { n:'Tim Duncan', pos:'PF', yr:'1998–99', why:'21.7 PPG, 11.4 RPG, 2.5 BPG — Finals MVP at 22. The start of everything.',
+      s:82, d:90, r:92, p:60, ppg:21.7, rpg:11.4, apg:2.4 },
+    { n:'Avery Johnson', pos:'PG', yr:'1995–96', why:'17.9 PPG — electrifying, fastest guard in the league at his peak',
+      s:62, d:70, r:36, p:72, ppg:17.9, rpg:2.5, apg:6.6 },
+    { n:'Sean Elliott', pos:'SF', yr:'1994–95', why:'20 PPG clutch scorer — "Memorial Day Miracle" embodied his prime',
+      s:65, d:60, r:38, p:55, ppg:20.0, rpg:4.0, apg:3.1 },
+  ],
+  '1990s_Suns': [
+    { n:'Charles Barkley', pos:'PF', yr:'1992–93', why:'25.6 PPG, 12.2 RPG, MVP on a 62-win team — his crowning achievement',
+      s:90, d:68, r:92, p:68, ppg:25.6, rpg:12.2, apg:5.1 },
+    { n:'Kevin Johnson', pos:'PG', yr:'1993–94', why:'20.1 PPG, 11.0 APG — one of the fastest and most dangerous PGs ever',
+      s:75, d:60, r:38, p:92, ppg:20.1, rpg:3.2, apg:11.0 },
+    { n:'Dan Majerle', pos:'SG', yr:'1992–93', why:'15.5 PPG, elite defender — the archetypal 3-and-D wing of his era',
+      s:65, d:78, r:42, p:52, ppg:15.5, rpg:5.2, apg:4.5 },
+    { n:'Danny Manning', pos:'SF', yr:'1992–93', why:'17.6 PPG off the bench — versatile scoring threat in SSOL predecessor',
+      s:68, d:55, r:52, p:45, ppg:17.6, rpg:5.6, apg:2.6 },
+  ],
+  '2000s_Lakers': [
+    { n:'Shaquille O\'Neal', pos:'C', yr:'1999–00', why:'29.7 PPG, 13.6 RPG, MVP, Finals MVP — the most physically dominant player since Wilt',
+      s:97, d:82, r:93, p:50, ppg:29.7, rpg:13.6, apg:3.8 },
+    { n:'Kobe Bryant', pos:'SG', yr:'2005–06', why:'35.4 PPG — highest scoring average since Jordan\'s 1987–88; the "Kobe for 60" season',
+      s:99, d:86, r:60, p:60, ppg:35.4, rpg:5.3, apg:4.5 },
+    { n:'Derek Fisher', pos:'PG', yr:'1999–00', why:'Championship-level floor general whose .4 seconds became legend',
+      s:48, d:65, r:32, p:62, ppg:10.8, rpg:2.8, apg:3.8 },
+    { n:'Rick Fox', pos:'SF', yr:'2000–01', why:'Three-point weapon and perimeter defender in three-peat dynasty',
+      s:50, d:65, r:40, p:45, ppg:12.0, rpg:4.2, apg:2.8 },
+  ],
+  '2000s_Spurs': [
+    { n:'Tim Duncan', pos:'PF', yr:'2001–02', why:'25.5 PPG, 12.7 RPG, 2.5 BPG — his peak statistical season; arguably the best PF season ever',
+      s:90, d:95, r:96, p:68, ppg:25.5, rpg:12.7, apg:3.7 },
+    { n:'Tony Parker', pos:'PG', yr:'2006–07', why:'18.6 PPG — Finals MVP with Popovich system mastered',
+      s:78, d:60, r:46, p:80, ppg:18.6, rpg:3.4, apg:5.5 },
+    { n:'Manu Ginobili', pos:'SG', yr:'2007–08', why:'19.5 PPG off the bench — best sixth man season in NBA history',
+      s:82, d:68, r:46, p:75, ppg:19.5, rpg:4.6, apg:4.8 },
+    { n:'Bruce Bowen', pos:'SF', yr:'2004–05', why:'Elite 3-and-D stopper; the defensive specialist trusted against every premier wing',
+      s:35, d:95, r:40, p:38, ppg:7.7, rpg:3.3, apg:1.3 },
+  ],
+  '2000s_Suns': [
+    { n:'Steve Nash', pos:'PG', yr:'2004–05', why:'11.5 APG, MVP — invented modern pace-and-space basketball',
+      s:72, d:48, r:42, p:99, ppg:15.5, rpg:3.3, apg:11.5 },
+    { n:'Amar\'e Stoudemire', pos:'PF', yr:'2004–05', why:'26.0 PPG, 8.9 RPG — the rocket fuel in Nash\'s SSOL engine',
+      s:90, d:58, r:82, p:42, ppg:26.0, rpg:8.9, apg:1.7 },
+    { n:'Shawn Marion', pos:'SF', yr:'2004–05', why:'19.4 PPG, 11.0 RPG — the Matrix doing everything on both ends',
+      s:75, d:78, r:82, p:50, ppg:19.4, rpg:11.0, apg:2.0 },
+    { n:'Joe Johnson', pos:'SG', yr:'2004–05', why:'17.1 PPG — cornerstone piece before his Atlanta peak',
+      s:70, d:58, r:40, p:55, ppg:17.1, rpg:4.1, apg:4.3 },
+  ],
+  '2000s_Cavaliers': [
+    { n:'LeBron James', pos:'SF', yr:'2008–09', why:'28.4 PPG, 7.6 RPG, 7.2 APG, MVP — single-handedly carrying a team to 66 wins',
+      s:95, d:80, r:80, p:90, ppg:28.4, rpg:7.6, apg:7.2 },
+    { n:'Mo Williams', pos:'PG', yr:'2008–09', why:'17.8 PPG, All-Star selection as LeBron\'s best supporting cast',
+      s:68, d:52, r:30, p:60, ppg:17.8, rpg:2.8, apg:4.1 },
+    { n:'Zydrunas Ilgauskas', pos:'C', yr:'2004–05', why:'16.9 PPG, 8.0 RPG — European finesse center at his best',
+      s:65, d:60, r:68, p:38, ppg:16.9, rpg:8.0, apg:1.3 },
+    { n:'Larry Hughes', pos:'SG', yr:'2004–05', why:'22.7 PPG, 3.9 SPG on Washington — elite defensive guard in his prime',
+      s:70, d:72, r:42, p:50, ppg:22.7, rpg:5.1, apg:3.8 },
+  ],
+  '2010s_Warriors': [
+    { n:'Stephen Curry', pos:'PG', yr:'2015–16', why:'30.1 PPG, 402 threes, unanimous MVP — possibly the greatest shooting season in history',
+      s:99, d:70, r:48, p:88, ppg:30.1, rpg:5.4, apg:6.7 },
+    { n:'Kevin Durant', pos:'SF', yr:'2013–14', why:'32.0 PPG, MVP — the year he surpassed everyone alive',
+      s:99, d:72, r:76, p:70, ppg:32.0, rpg:7.4, apg:5.5 },
+    { n:'Klay Thompson', pos:'SG', yr:'2015–16', why:'22.1 PPG, all-time single-game record 37 points in a quarter',
+      s:84, d:78, r:44, p:75, ppg:22.1, rpg:3.8, apg:2.1 },
+    { n:'Draymond Green', pos:'PF', yr:'2015–16', why:'Near triple-double impact; the defensive brain of a dynasty',
+      s:48, d:96, r:70, p:82, ppg:14.0, rpg:9.5, apg:7.4 },
+  ],
+  '2010s_Heat': [
+    { n:'LeBron James', pos:'SF', yr:'2012–13', why:'26.8 PPG, 27-game win streak, 64.3 TS% — the most efficient superstar season ever',
+      s:96, d:88, r:78, p:88, ppg:26.8, rpg:8.0, apg:7.3 },
+    { n:'Dwyane Wade', pos:'SG', yr:'2009–10', why:'26.6 PPG, 2.9 SPG — Wade\'s last truly elite scoring season',
+      s:88, d:80, r:56, p:70, ppg:26.6, rpg:6.9, apg:4.5 },
+    { n:'Chris Bosh', pos:'PF', yr:'2012–13', why:'18.0 PPG, 6.8 RPG — redefined the stretch-4 role perfectly',
+      s:72, d:65, r:70, p:48, ppg:18.0, rpg:6.8, apg:1.9 },
+    { n:'Ray Allen', pos:'SG', yr:'2011–12', why:'Greatest shooter of all time; clutch corner-three in Finals defines his Miami tenure',
+      s:68, d:62, r:32, p:52, ppg:10.9, rpg:2.7, apg:1.6 },
+  ],
+  '2010s_Spurs': [
+    { n:'Kawhi Leonard', pos:'SF', yr:'2016–17', why:'25.5 PPG, 5.8 RPG, DPOY — the moment he became the best two-way player alive',
+      s:88, d:99, r:66, p:62, ppg:25.5, rpg:5.8, apg:3.5 },
+    { n:'LaMarcus Aldridge', pos:'PF', yr:'2015–16', why:'18.0 PPG, 8.5 RPG in his first Spurs season — ideal Popovich fit',
+      s:78, d:62, r:78, p:52, ppg:18.0, rpg:8.5, apg:2.4 },
+    { n:'Tony Parker', pos:'PG', yr:'2011–12', why:'18.3 PPG in Spurs\' dominant regular season — the European blueprint for PG play',
+      s:76, d:62, r:46, p:80, ppg:18.3, rpg:2.8, apg:7.7 },
+    { n:'Pau Gasol', pos:'C', yr:'2015–16', why:'16.5 PPG, 11.0 RPG — resurgent in San Antonio as elite spacing big',
+      s:70, d:65, r:82, p:60, ppg:16.5, rpg:11.0, apg:3.8 },
+  ],
+  '2010s_Thunder': [
+    { n:'Kevin Durant', pos:'SF', yr:'2013–14', why:'32.0 PPG, MVP — "You the real MVP" speech, the apex of his OKC career',
+      s:99, d:70, r:76, p:70, ppg:32.0, rpg:7.4, apg:5.5 },
+    { n:'Russell Westbrook', pos:'PG', yr:'2016–17', why:'31.6 PPG, 10.7 RPG, 10.4 APG — first player to average a triple-double since Robertson',
+      s:92, d:74, r:74, p:88, ppg:31.6, rpg:10.7, apg:10.4 },
+    { n:'James Harden', pos:'SG', yr:'2012–13', why:'25.9 PPG before leaving — first glimpse of what he\'d become',
+      s:84, d:48, r:44, p:78, ppg:25.9, rpg:5.8, apg:5.8 },
+    { n:'Serge Ibaka', pos:'PF', yr:'2013–14', why:'15.1 PPG, 3.0 BPG — elite rim protector and stretch-4 at his best',
+      s:56, d:88, r:70, p:35, ppg:15.1, rpg:8.8, apg:0.9 },
+  ],
+  '2020s_Bucks': [
+    { n:'Giannis Antetokounmpo', pos:'PF', yr:'2019–20', why:'29.6 PPG, 13.7 RPG, MVP, DPOY — won both awards in the same season',
+      s:95, d:90, r:92, p:65, ppg:29.6, rpg:13.7, apg:5.8 },
+    { n:'Khris Middleton', pos:'SF', yr:'2021–22', why:'20.4 PPG in his best full season — elite mid-range assassin',
+      s:76, d:68, r:50, p:62, ppg:20.4, rpg:5.4, apg:5.4 },
+    { n:'Jrue Holiday', pos:'PG', yr:'2020–21', why:'17.7 PPG, 2.7 SPG in championship run — defensive anchor of the dynasty',
+      s:70, d:90, r:46, p:70, ppg:17.7, rpg:4.5, apg:8.3 },
+    { n:'Brook Lopez', pos:'C', yr:'2022–23', why:'15.9 PPG, 2.5 BPG — elite rim-protecting stretch center in a late-career peak',
+      s:64, d:88, r:60, p:38, ppg:15.9, rpg:6.7, apg:1.3 },
+  ],
+  '2020s_Nuggets': [
+    { n:'Nikola Jokic', pos:'C', yr:'2021–22', why:'26.4 PPG, 13.8 RPG, 7.9 APG, MVP — the greatest center-playmaker in NBA history',
+      s:88, d:70, r:96, p:98, ppg:26.4, rpg:13.8, apg:7.9 },
+    { n:'Jamal Murray', pos:'PG', yr:'2022–23', why:'20.0 PPG on championship team — ice-cold scorer in the postseason',
+      s:80, d:65, r:40, p:72, ppg:20.0, rpg:4.0, apg:6.2 },
+    { n:'Michael Porter Jr.', pos:'SF', yr:'2022–23', why:'16.9 PPG on 55% shooting — the three-point sniper in Jokic\'s system',
+      s:76, d:52, r:68, p:38, ppg:16.9, rpg:7.3, apg:1.4 },
+    { n:'Aaron Gordon', pos:'PF', yr:'2022–23', why:'15.0 PPG, 6.7 RPG, versatile defender — the glue of a championship team',
+      s:60, d:78, r:66, p:48, ppg:15.0, rpg:6.7, apg:3.3 },
+  ],
+  '2020s_Celtics': [
+    { n:'Jayson Tatum', pos:'SF', yr:'2023–24', why:'26.9 PPG, MVP finalist — carrying Boston to the championship',
+      s:92, d:76, r:70, p:68, ppg:26.9, rpg:8.1, apg:4.9 },
+    { n:'Jaylen Brown', pos:'SG', yr:'2023–24', why:'23.0 PPG, Finals MVP — emerged as bonafide co-star and clutch performer',
+      s:84, d:78, r:54, p:58, ppg:23.0, rpg:5.5, apg:3.6 },
+    { n:'Jrue Holiday', pos:'PG', yr:'2023–24', why:'12.5 PPG, 5.4 APG — the lockdown defensive piece on a title team',
+      s:58, d:90, r:42, p:68, ppg:12.5, rpg:4.0, apg:5.4 },
+    { n:'Al Horford', pos:'C', yr:'2021–22', why:'10.2 PPG, IQ-basketball and rim protection — the veteran anchor',
+      s:52, d:82, r:70, p:60, ppg:10.2, rpg:7.7, apg:3.4 },
+  ],
+};
+
+const ALL_KEYS = Object.keys(DB);
+const OPPONENTS = ['Celtics','Lakers','Warriors','Bulls','Heat','Spurs','Bucks','Knicks','Suns','76ers','Thunder','Nuggets','Nets','Mavs','Clippers','Raptors','Pistons','Jazz','Rockets','Pacers'];
+
+const POSITION_ELIGIBILITY = {
+  'Bill Russell': ['PF','C'],
+  'Bob Cousy': ['PG','SG'],
+  'Nate Thurmond': ['PF','C'],
+  'Elgin Baylor': ['SF','PF'],
+  'Jerry West': ['PG','SG'],
+  'Gail Goodrich': ['PG','SG'],
+  'Kareem Abdul-Jabbar': ['C'],
+  'Oscar Robertson': ['PG','SG','SF'],
+  'Bob Dandridge': ['SF','PF'],
+  'Julius Erving': ['SF','PF'],
+  'George McGinnis': ['PF','C'],
+  'Doug Collins': ['PG','SG'],
+  'Magic Johnson': ['PG','SG','SF','PF'],
+  'James Worthy': ['SF','PF'],
+  'Byron Scott': ['SG','SF'],
+  'Larry Bird': ['SF','PF'],
+  'Kevin McHale': ['PF','C'],
+  'Robert Parish': ['C'],
+  'Dennis Johnson': ['PG','SG'],
+  'Maurice Cheeks': ['PG'],
+  'Andrew Toney': ['PG','SG'],
+  'Michael Jordan': ['PG','SG','SF'],
+  'Scottie Pippen': ['PG','SG','SF','PF'],
+  'Dennis Rodman': ['SF','PF','C'],
+  'Toni Kukoc': ['SF','PF'],
+  'Karl Malone': ['PF','C'],
+  'John Stockton': ['PG'],
+  'Jeff Hornacek': ['PG','SG'],
+  'David Robinson': ['PF','C'],
+  'Tim Duncan': ['PF','C'],
+  'Avery Johnson': ['PG'],
+  'Sean Elliott': ['SF','PF'],
+  'Charles Barkley': ['SF','PF','C'],
+  'Kevin Johnson': ['PG'],
+  'Dan Majerle': ['SG','SF'],
+  'Danny Manning': ['SF','PF'],
+  'Shaquille O\'Neal': ['C'],
+  'Kobe Bryant': ['PG','SG','SF'],
+  'Derek Fisher': ['PG'],
+  'Rick Fox': ['SF','PF'],
+  'Tony Parker': ['PG'],
+  'Manu Ginobili': ['PG','SG','SF'],
+  'Bruce Bowen': ['SG','SF','PF'],
+  'Steve Nash': ['PG'],
+  'Amar\'e Stoudemire': ['PF','C'],
+  'Shawn Marion': ['SF','PF'],
+  'Joe Johnson': ['PG','SG','SF'],
+  'LeBron James': ['PG','SG','SF','PF','C'],
+  'Mo Williams': ['PG','SG'],
+  'Zydrunas Ilgauskas': ['C'],
+  'Larry Hughes': ['PG','SG','SF'],
+  'Stephen Curry': ['PG','SG'],
+  'Kevin Durant': ['SF','PF','C'],
+  'Klay Thompson': ['SG','SF'],
+  'Draymond Green': ['PF','C'],
+  'Dwyane Wade': ['PG','SG'],
+  'Chris Bosh': ['PF','C'],
+  'Ray Allen': ['SG','SF'],
+  'Kawhi Leonard': ['SG','SF','PF'],
+  'LaMarcus Aldridge': ['PF','C'],
+  'Pau Gasol': ['PF','C'],
+  'Russell Westbrook': ['PG','SG'],
+  'James Harden': ['PG','SG'],
+  'Serge Ibaka': ['PF','C'],
+  'Giannis Antetokounmpo': ['PG','SF','PF','C'],
+  'Khris Middleton': ['SG','SF'],
+  'Jrue Holiday': ['PG','SG'],
+  'Brook Lopez': ['C'],
+  'Nikola Jokic': ['C'],
+  'Jamal Murray': ['PG','SG'],
+  'Michael Porter Jr.': ['SF','PF'],
+  'Aaron Gordon': ['SF','PF','C'],
+  'Jayson Tatum': ['SF','PF'],
+  'Jaylen Brown': ['SG','SF'],
+  'Al Horford': ['PF','C'],
+};
+
+// ─── STATE ──────────────────────────────────────────────────────────────────
+let state = {
+  round: 0,
+  roster: [null,null,null,null,null], // indexed by POSITIONS
+  currentKey: null,
+  currentPlayers: [],
+  eraSkips: 1,
+  teamSkips: 1,
+  spinning: false,
+  spinInterval: null,
+  pendingPlayer: null,
+  pendingPlayerIdx: null,
+  pendingFromIdx: null,
+};
+
+// ─── INIT ───────────────────────────────────────────────────────────────────
+function init() {
+  renderRoundTrack();
+  renderRosterRow();
+  renderDraftScores();
+}
+
+function renderRoundTrack() {
+  const el = document.getElementById('round-track');
+  let h = '<span class="round-label">' + (state.round >= 5 ? 'Lineup set' : 'Round ' + (state.round+1) + ' of 5') + '</span>';
+  for (let i=0;i<5;i++) {
+    let cls = 'round-pip';
+    if (i < state.round) cls += ' done';
+    else if (i === state.round) cls += ' active';
+    h += '<div class="' + cls + '"></div>';
+  }
+  el.innerHTML = h;
+}
+
+function renderRosterRow() {
+  const el = document.getElementById('roster-row');
+  el.innerHTML = POSITIONS.map((pos,i) => {
+    const p = state.roster[i];
+    const isSource = state.pendingFromIdx === i;
+    const isTarget = state.pendingPlayer && canPlacePlayerAt(state.pendingPlayer, pos, state.pendingFromIdx);
+    if (p) {
+      return `<div class="r-slot filled selectable${isSource?' move-source':''}${isTarget?' place-target':''}" data-slot="${i}">
+        <div class="r-slot-pos">${pos}</div>
+        <div class="r-slot-name">${p.n}</div>
+        <div class="r-slot-year">${p.yr}</div>
+        <div class="r-slot-action">${isTarget ? 'Place here' : 'Move'}</div>
+      </div>`;
+    }
+    return `<div class="r-slot selectable${isTarget?' place-target':''}" data-slot="${i}">
+      <div class="r-slot-pos">${pos}</div>
+      <div class="r-slot-empty">—</div>
+      <div class="r-slot-action">${isTarget ? 'Place here' : 'Open'}</div>
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('.r-slot').forEach(function(slot) {
+    slot.addEventListener('click', function() {
+      handleRosterSlotClick(parseInt(slot.getAttribute('data-slot')));
+    });
+  });
+}
+
+// ─── SPIN ───────────────────────────────────────────────────────────────────
+function spin() {
+  if (state.spinning || state.roster.every(Boolean)) return;
+  document.getElementById('player-section').classList.add('hidden');
+  document.getElementById('skip-era-btn').disabled = true;
+  document.getElementById('skip-team-btn').disabled = true;
+  state.spinning = true;
+
+  const slotMachine = document.getElementById('slot-machine');
+  slotMachine.classList.add('active');
+
+  const mainEl = document.getElementById('slot-main');
+  const eraEl = document.getElementById('slot-era-lbl');
+  const instrEl = document.getElementById('slot-instruction');
+  mainEl.classList.add('spinning');
+
+  let t = 0;
+  const dur = 1000;
+  const tick = 60;
+  state.spinInterval = setInterval(() => {
+    t += tick;
+    const rk = ALL_KEYS[Math.floor(Math.random()*ALL_KEYS.length)];
+    const { era, team } = parseKey(rk);
+    eraEl.textContent = era;
+    mainEl.textContent = team;
+    if (t >= dur) {
+      clearInterval(state.spinInterval);
+      state.spinning = false;
+      mainEl.classList.remove('spinning');
+      const chosen = getRandomPlayableKey();
+      if (!chosen) {
+        instrEl.textContent = 'No valid players remain.';
+        document.getElementById('spin-btn').disabled = true;
+        return;
+      }
+      state.currentKey = chosen;
+      const { era: e, team: tm } = parseKey(chosen);
+      eraEl.textContent = e;
+      mainEl.textContent = tm;
+      instrEl.textContent = 'Pick one player for your starting five';
+      document.getElementById('skip-era-btn').disabled = (state.eraSkips <= 0);
+      document.getElementById('skip-team-btn').disabled = (state.teamSkips <= 0);
+      document.getElementById('spin-btn').textContent = '↺ Re-spin';
+      showPlayers(chosen);
+    }
+  }, tick);
+}
+
+function parseKey(key) {
+  const idx = key.indexOf('_');
+  return { era: key.slice(0,idx), team: key.slice(idx+1) };
+}
+
+function isPlayerDrafted(player) {
+  return state.roster.some(p => p && p.n === player.n);
+}
+
+function getPlayerPositions(player) {
+  return player.slots || POSITION_ELIGIBILITY[player.n] || [player.pos];
+}
+
+function canPlayerPlay(player, pos) {
+  return getPlayerPositions(player).includes(pos);
+}
+
+function getOpenPositions(player) {
+  if (isPlayerDrafted(player)) return [];
+  return getPlayerPositions(player).filter(pos => {
+    const posIdx = POSITIONS.indexOf(pos);
+    return posIdx !== -1 && state.roster[posIdx] === null;
+  });
+}
+
+function isPlayerAvailable(player) {
+  return getOpenPositions(player).length > 0;
+}
+
+function hasAvailablePlayer(key) {
+  return DB[key].some(isPlayerAvailable);
+}
+
+function getPlayableKeys(filterFn) {
+  return ALL_KEYS.filter(key => (!filterFn || filterFn(key)) && hasAvailablePlayer(key));
+}
+
+function getRandomPlayableKey(filterFn) {
+  const keys = getPlayableKeys(filterFn);
+  return keys.length ? keys[Math.floor(Math.random()*keys.length)] : null;
+}
+
+function canPlacePlayerAt(player, pos, fromIdx) {
+  const targetIdx = POSITIONS.indexOf(pos);
+  if (!player || targetIdx === -1 || !canPlayerPlay(player, pos)) return false;
+  return buildLineupWith(player, targetIdx) !== null;
+}
+
+function getPlaceablePositions(player, fromIdx) {
+  return POSITIONS.filter(pos => canPlacePlayerAt(player, pos, fromIdx));
+}
+
+function beginPlacement(player, playerIdx, fromIdx) {
+  state.pendingPlayer = player;
+  state.pendingPlayerIdx = playerIdx;
+  state.pendingFromIdx = fromIdx;
+  renderRosterRow();
+  const positions = getPlaceablePositions(player, fromIdx);
+  document.getElementById('slot-instruction').textContent = positions.length
+    ? 'Choose a position box for ' + player.n
+    : player.n + ' has no legal position changes right now.';
+}
+
+function clearPlacement() {
+  state.pendingPlayer = null;
+  state.pendingPlayerIdx = null;
+  state.pendingFromIdx = null;
+}
+
+function placePendingPlayer(pos) {
+  if (!state.pendingPlayer) return false;
+  const targetIdx = POSITIONS.indexOf(pos);
+  const nextRoster = buildLineupWith(state.pendingPlayer, targetIdx);
+  if (!nextRoster) return false;
+
+  if (!isPlayerDrafted(state.pendingPlayer)) state.round++;
+  state.roster = nextRoster;
+  clearPlacement();
+  afterRosterChanged();
+  return true;
+}
+
+function buildLineupWith(player, targetIdx) {
+  if (!player || targetIdx < 0 || !canPlayerPlay(player, POSITIONS[targetIdx])) return null;
+
+  const existing = state.roster.filter(Boolean).filter(p => p.n !== player.n);
+  const players = [...existing, player];
+  if (players.length > 5) return null;
+
+  const nextRoster = [null,null,null,null,null];
+  nextRoster[targetIdx] = player;
+  const remaining = players.filter(p => p.n !== player.n).sort((a,b) => getPlayerPositions(a).length - getPlayerPositions(b).length);
+
+  function fill(idx) {
+    if (idx >= remaining.length) return true;
+    const p = remaining[idx];
+    const positions = getPlayerPositions(p)
+      .map(pos => POSITIONS.indexOf(pos))
+      .filter(posIdx => posIdx !== -1 && nextRoster[posIdx] === null);
+
+    for (const posIdx of positions) {
+      nextRoster[posIdx] = p;
+      if (fill(idx + 1)) return true;
+      nextRoster[posIdx] = null;
+    }
+    return false;
+  }
+
+  return fill(0) ? nextRoster : null;
+}
+
+function handleRosterSlotClick(slotIdx) {
+  const pos = POSITIONS[slotIdx];
+  if (state.pendingPlayer) {
+    placePendingPlayer(pos);
+    return;
+  }
+
+  const player = state.roster[slotIdx];
+  if (player) beginPlacement(player, null, slotIdx);
+}
+
+function showPlayers(key) {
+  const players = DB[key];
+  state.currentPlayers = players;
+  const grid = document.getElementById('player-grid');
+  const lbl = document.getElementById('player-section-lbl');
+  const { era, team } = parseKey(key);
+  lbl.textContent = era + ' ' + team + ' — choose one';
+
+  grid.innerHTML = players.map((p,i) => {
+    const openPositions = getOpenPositions(p);
+    const taken = openPositions.length === 0;
+    const eligiblePositions = getPlayerPositions(p);
+    const posButtons = openPositions.length
+      ? `<div class="pos-pick-row">
+          <span class="pos-pick-label">${openPositions.length === 1 ? 'Click card or slot' : 'Choose slot'}</span>
+          ${openPositions.map(pos => `<button class="pos-pick-btn" type="button" data-idx="${i}" data-pos="${pos}">${pos}</button>`).join('')}
+        </div>`
+      : `<div class="pos-lock-note">${isPlayerDrafted(p) ? 'Already drafted' : 'No eligible open slot'}</div>`;
+    return `<div class="player-card${taken?' unavailable':''}" data-idx="${i}">
+      <div class="pc-name">${p.n}</div>
+      <div class="pc-meta">${eligiblePositions.join('/')} · ${p.yr}</div>
+      <div class="pc-prime">${p.why}</div>
+      ${posButtons}
+      <div class="stat-row">
+        <span class="stat-lbl">SCR</span>
+        <div class="stat-track"><div class="stat-fill sf-scr" style="width:${p.s}%"></div></div>
+        <span class="stat-num">${p.s}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-lbl">DEF</span>
+        <div class="stat-track"><div class="stat-fill sf-def" style="width:${p.d}%"></div></div>
+        <span class="stat-num">${p.d}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-lbl">REB</span>
+        <div class="stat-track"><div class="stat-fill sf-reb" style="width:${p.r}%"></div></div>
+        <span class="stat-num">${p.r}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-lbl">PLY</span>
+        <div class="stat-track"><div class="stat-fill sf-ply" style="width:${p.p}%"></div></div>
+        <span class="stat-num">${p.p}</span>
+      </div>
+      <div class="pc-ppg">PPG <span>${p.ppg}</span> &nbsp; RPG <span>${p.rpg}</span> &nbsp; APG <span>${p.apg}</span></div>
+    </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.pos-pick-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      selectPlayer(parseInt(btn.getAttribute('data-idx')), btn.getAttribute('data-pos'));
+    });
+  });
+
+  grid.querySelectorAll('.player-card:not(.unavailable)').forEach(function(card) {
+    card.addEventListener('click', function() {
+      const idx = parseInt(card.getAttribute('data-idx'));
+      const player = state.currentPlayers[idx];
+      const openPositions = getOpenPositions(player);
+
+      grid.querySelectorAll('.player-card.needs-position').forEach(function(activeCard) {
+        activeCard.classList.remove('needs-position');
+      });
+      card.classList.add('needs-position');
+      beginPlacement(player, idx, null);
+    });
+  });
+
+  document.getElementById('player-section').classList.remove('hidden');
+}
+
+function selectPlayer(i, pos) {
+  const p = state.currentPlayers[i];
+  if (!p || !getOpenPositions(p).includes(pos)) return;
+  beginPlacement(p, i, null);
+  placePendingPlayer(pos);
+}
+
+function getRosterTotals() {
+  const players = state.roster.filter(Boolean);
+  const points = players.reduce((a,p) => a + p.ppg, 0);
+  const rebounds = players.reduce((a,p) => a + p.rpg, 0);
+  const assists = players.reduce((a,p) => a + p.apg, 0);
+  const ratings = scoreRoster();
+  return {
+    points: Number(points.toFixed(1)),
+    rebounds: Number(rebounds.toFixed(1)),
+    assists: Number(assists.toFixed(1)),
+    overall: Math.round(ratings.raw),
+  };
+}
+
+function renderScorePills(el, totals) {
+  el.innerHTML = [
+    { label:'Points', val: totals.points },
+    { label:'Rebounds', val: totals.rebounds },
+    { label:'Assists', val: totals.assists },
+    { label:'Overall', val: totals.overall },
+  ].map(s => `<div class="score-pill">
+    <div class="score-pill-label">${s.label}</div>
+    <div class="score-pill-val">${s.val}</div>
+  </div>`).join('');
+}
+
+function renderDraftScores() {
+  const el = document.getElementById('draft-score-row');
+  if (!el) return;
+  if (!state.roster.some(Boolean)) {
+    el.classList.add('hidden');
+    el.innerHTML = '';
+    return;
+  }
+  renderScorePills(el, getRosterTotals());
+  el.classList.remove('hidden');
+}
+
+function updateDraftControls() {
+  const complete = state.roster.every(Boolean);
+  document.getElementById('sim-btn').classList.toggle('hidden', !complete);
+  document.getElementById('spin-btn').disabled = complete;
+  if (complete) {
+    document.getElementById('slot-main').textContent = 'Lineup ready';
+    document.getElementById('slot-era-lbl').textContent = 'Set positions';
+    document.getElementById('slot-instruction').textContent = 'Click any roster player to move them, then click Sim season.';
+  } else {
+    document.getElementById('spin-btn').disabled = false;
+  }
+}
+
+function afterRosterChanged() {
+  renderRoundTrack();
+  renderRosterRow();
+  renderDraftScores();
+  document.getElementById('player-section').classList.add('hidden');
+  document.getElementById('slot-machine').classList.remove('active');
+  document.getElementById('skip-era-btn').disabled = true;
+  document.getElementById('skip-team-btn').disabled = true;
+  document.getElementById('spin-btn').innerHTML = '&#9654; Spin';
+
+  if (state.roster.every(Boolean)) {
+    updateDraftControls();
+    return;
+  }
+
+  document.getElementById('slot-main').textContent = 'Spin to continue';
+  document.getElementById('slot-era-lbl').textContent = 'Round ' + (state.round+1);
+  document.getElementById('slot-instruction').textContent = 'Each spin reveals a franchise + era. You pick one player from that pool.';
+  updateDraftControls();
+}
+
+// ─── SKIPS ──────────────────────────────────────────────────────────────────
+function skipEra() {
+  if (state.eraSkips <= 0) return;
+  const { era } = parseKey(state.currentKey);
+  const newKey = getRandomPlayableKey(k => parseKey(k).era !== era);
+  if (!newKey) {
+    document.getElementById('slot-instruction').textContent = 'No other eras have a valid player for your open positions.';
+    document.getElementById('skip-era-btn').disabled = true;
+    return;
+  }
+  state.eraSkips--;
+  document.getElementById('era-ct').textContent = '(used)';
+  document.getElementById('skip-era-btn').disabled = true;
+  state.currentKey = newKey;
+  const { era: e, team: tm } = parseKey(newKey);
+  document.getElementById('slot-era-lbl').textContent = e;
+  document.getElementById('slot-main').textContent = tm;
+  showPlayers(newKey);
+}
+
+function skipTeam() {
+  if (state.teamSkips <= 0) return;
+  const { era } = parseKey(state.currentKey);
+  const newKey = getRandomPlayableKey(k => parseKey(k).era === era && k !== state.currentKey);
+  if (!newKey) {
+    document.getElementById('slot-instruction').textContent = 'No other teams in this era have a valid player for your open positions.';
+    document.getElementById('skip-team-btn').disabled = true;
+    return;
+  }
+  state.teamSkips--;
+  document.getElementById('team-ct').textContent = '(used)';
+  document.getElementById('skip-team-btn').disabled = true;
+  state.currentKey = newKey;
+  const { era: e, team: tm } = parseKey(newKey);
+  document.getElementById('slot-era-lbl').textContent = e;
+  document.getElementById('slot-main').textContent = tm;
+  showPlayers(newKey);
+}
+
+// ─── SIMULATION ─────────────────────────────────────────────────────────────
+function scoreRoster() {
+  const r = state.roster;
+  const avg = fn => Math.round(r.reduce((a,p) => a + (p ? p[fn] : 0), 0) / 5);
+  const scr = avg('s'), def = avg('d'), reb = avg('r'), ply = avg('p');
+  const raw = (scr * 0.28) + (def * 0.27) + (reb * 0.22) + (ply * 0.23);
+  const weaknesses = [];
+  if (def < 60) weaknesses.push('Defensive liability — opponents will shoot freely.');
+  if (reb < 55) weaknesses.push('Rebounding gap — second-chance points will pile up.');
+  if (ply < 55) weaknesses.push('Playmaking thin — isolation-heavy, turnover-prone.');
+  if (scr < 58) weaknesses.push('Scoring drought risk — stagnates against elite defenses.');
+  return { scr, def, reb, ply, raw, weakness: weaknesses[0] || null };
+}
+
+function startSim() {
+  if (!state.roster.every(Boolean)) return;
+  clearPlacement();
+  document.getElementById('screen-draft').classList.add('hidden');
+  document.getElementById('screen-sim').classList.remove('hidden');
+
+  const scores = scoreRoster();
+  let g = 0, w = 0, l = 0;
+  const bar = document.getElementById('sim-bar');
+  const recEl = document.getElementById('sim-record');
+  const lbl = document.getElementById('sim-game-lbl');
+
+  // Pre-compute outcomes
+  const toughGames = [];
+  const outcomes = [];
+  for (let i=0;i<82;i++) {
+    const opp = OPPONENTS[Math.floor(Math.random()*OPPONENTS.length)];
+    const diff = Math.random();
+    const threshold = (scores.raw / 100) * 0.88 + 0.06;
+    const won = Math.random() < threshold;
+    const isTough = diff > 0.82;
+    const margin = won ? Math.ceil(Math.random()*14+1) : -Math.ceil(Math.random()*10+1);
+    outcomes.push(won);
+    if (isTough) toughGames.push({ g: i+1, opp, won, margin });
+  }
+
+  const totalW = outcomes.filter(Boolean).length;
+
+  const iv = setInterval(() => {
+    g++;
+    if (outcomes[g-1]) w++; else l++;
+    const pct = Math.round((g/82)*100);
+    bar.style.width = pct + '%';
+    lbl.textContent = 'Game ' + g + ' of 82';
+    recEl.textContent = w + ' – ' + l;
+    if (g >= 82) {
+      clearInterval(iv);
+      setTimeout(() => showResult({ w, l, toughGames: toughGames.slice(0,6) }, scores), 500);
+    }
+  }, 22);
+}
+
+// ─── RESULT ─────────────────────────────────────────────────────────────────
+function showResult(result, scores) {
+  document.getElementById('screen-sim').classList.add('hidden');
+  document.getElementById('screen-result').classList.remove('hidden');
+
+  const perfect = result.w === 82;
+  const recEl = document.getElementById('result-record');
+  recEl.textContent = result.w + ' – ' + result.l;
+  recEl.className = 'result-record-big ' + (
+    perfect ? 'perfect' : result.w >= 75 ? 'great' : result.w >= 65 ? 'good' : result.w >= 55 ? 'ok' : 'bad'
+  );
+
+  const grade = perfect ? 'S' : result.w >= 75 ? 'A' : result.w >= 65 ? 'B' : result.w >= 55 ? 'C' : 'D';
+  const gradeEl = document.getElementById('result-grade');
+  gradeEl.textContent = grade + '-tier · ' + gradeLabel(grade);
+  gradeEl.className = 'result-grade grade-' + grade;
+
+  const verdicts = {
+    S: 'Perfection. This prime-year lineup goes down as the greatest team ever assembled. Every statistical category maxed out.',
+    A: 'Historic season. A legitimate 82-0 challenger — a few bad beats away from perfection.',
+    B: 'Elite squad. Dominant for stretches but not quite bulletproof. Postseason contender.',
+    C: 'Solid roster. Some gaps in construction showed up over a long season. Playoff-bound.',
+    D: 'Tough draw. The spin machine did not cooperate. Rebuild and try again.',
+  };
+  document.getElementById('result-verdict').textContent = verdicts[grade];
+
+  // Roster
+  document.getElementById('result-roster').innerHTML = state.roster.map((p,i) =>
+    `<div class="result-player-card">
+      <div class="rpc-pos">${POSITIONS[i]}</div>
+      <div class="rpc-name">${p.n}</div>
+      <div class="rpc-year">${p.yr}</div>
+    </div>`
+  ).join('');
+
+  // Score pills
+  renderScorePills(document.getElementById('score-row'), getRosterTotals());
+
+  // Weakness
+  if (scores.weakness) {
+    const wb = document.getElementById('weakness-box');
+    document.getElementById('weakness-text').textContent = 'Roster weakness: ' + scores.weakness;
+    wb.classList.remove('hidden');
+  }
+
+  // Game log
+  const log = document.getElementById('game-log');
+  const lines = result.toughGames.map(tg =>
+    `<div class="log-entry">
+      <span class="log-result ${tg.won?'log-w':'log-l'}">${tg.won?'W':'L'}</span>
+      <span>Game ${tg.g} vs. ${tg.opp}</span>
+      <span class="log-margin">${tg.won?'+':''}${tg.margin}</span>
+    </div>`
+  );
+  if (perfect) lines.unshift('<div class="log-entry"><span style="color:var(--gold);font-weight:600">All 82 won. Perfection achieved.</span></div>');
+  log.innerHTML = lines.join('');
+}
+
+function gradeLabel(g) {
+  return { S:'Perfect season', A:'Historic', B:'Elite', C:'Solid', D:'Rebuild' }[g];
+}
+
+// ─── RESET ───────────────────────────────────────────────────────────────────
+function resetGame() {
+  state = { round:0, roster:[null,null,null,null,null], currentKey:null, currentPlayers:[], eraSkips:1, teamSkips:1, spinning:false, spinInterval:null, pendingPlayer:null, pendingPlayerIdx:null, pendingFromIdx:null };
+  document.getElementById('screen-result').classList.add('hidden');
+  document.getElementById('screen-sim').classList.add('hidden');
+  document.getElementById('screen-draft').classList.remove('hidden');
+  document.getElementById('player-section').classList.add('hidden');
+  document.getElementById('slot-main').textContent = 'Spin to begin';
+  document.getElementById('slot-era-lbl').textContent = 'Ready';
+  document.getElementById('slot-instruction').textContent = 'Each spin reveals a franchise + era. You pick one player from that pool.';
+  document.getElementById('slot-machine').classList.remove('active');
+  document.getElementById('spin-btn').innerHTML = '&#9654; Spin';
+  document.getElementById('spin-btn').disabled = false;
+  document.getElementById('sim-btn').classList.add('hidden');
+  document.getElementById('skip-era-btn').disabled = true;
+  document.getElementById('skip-team-btn').disabled = true;
+  document.getElementById('era-ct').textContent = '(1 left)';
+  document.getElementById('team-ct').textContent = '(1 left)';
+  document.getElementById('weakness-box').classList.add('hidden');
+  renderRoundTrack();
+  renderRosterRow();
+  renderDraftScores();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  init();
+  document.getElementById('spin-btn').addEventListener('click', spin);
+  document.getElementById('sim-btn').addEventListener('click', startSim);
+  document.getElementById('skip-era-btn').addEventListener('click', skipEra);
+  document.getElementById('skip-team-btn').addEventListener('click', skipTeam);
+  document.getElementById('play-again-btn').addEventListener('click', resetGame);
+});
+</script>
+</body>
+</html>
