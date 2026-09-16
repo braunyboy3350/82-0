@@ -1289,7 +1289,9 @@ function renderRosterRow() {
 
 // ─── SPIN ───────────────────────────────────────────────────────────────────
 function spin() {
-  if (state.spinning || state.roster.every(Boolean)) return;
+  if (state.spinning || state.currentKey || state.roster.every(Boolean)) return;
+  clearPlacement();
+  document.getElementById('spin-btn').disabled = true;
   document.getElementById('player-section').classList.add('hidden');
   document.getElementById('skip-era-btn').disabled = true;
   document.getElementById('skip-team-btn').disabled = true;
@@ -1327,9 +1329,7 @@ function spin() {
       eraEl.textContent = e;
       mainEl.textContent = tm;
       instrEl.textContent = 'Pick one player for your starting five';
-      document.getElementById('skip-era-btn').disabled = (state.eraSkips <= 0);
-      document.getElementById('skip-team-btn').disabled = (state.teamSkips <= 0);
-      document.getElementById('spin-btn').textContent = '↺ Re-spin';
+      updateDraftControls();
       showPlayers(chosen);
     }
   }, tick);
@@ -1410,10 +1410,11 @@ function placePendingPlayer(pos) {
   const nextRoster = buildLineupWith(state.pendingPlayer, targetIdx);
   if (!nextRoster) return false;
 
-  if (!isPlayerDrafted(state.pendingPlayer)) state.round++;
+  const drafted = !isPlayerDrafted(state.pendingPlayer);
+  if (drafted) state.round++;
   state.roster = nextRoster;
   clearPlacement();
-  afterRosterChanged();
+  afterRosterChanged(drafted);
   return true;
 }
 
@@ -1573,77 +1574,85 @@ function renderDraftScores() {
   el.classList.remove('hidden');
 }
 
+function getSkipKeys(kind) {
+  if (!state.currentKey) return [];
+  const { era, team } = parseKey(state.currentKey);
+  return getPlayableKeys(key => {
+    const candidate = parseKey(key);
+    return kind === 'era'
+      ? candidate.team === team && candidate.era !== era
+      : candidate.era === era && candidate.team !== team;
+  });
+}
+
 function updateDraftControls() {
   const complete = state.roster.every(Boolean);
+  const choosing = Boolean(state.currentKey) && !complete && !state.spinning;
+  const spinBtn = document.getElementById('spin-btn');
   document.getElementById('sim-btn').classList.toggle('hidden', !complete);
-  document.getElementById('spin-btn').disabled = complete;
+  spinBtn.classList.toggle('hidden', choosing || complete);
+  spinBtn.disabled = complete || state.spinning || choosing;
+  document.getElementById('skip-era-btn').disabled =
+    !choosing || state.eraSkips <= 0 || getSkipKeys('era').length === 0;
+  document.getElementById('skip-team-btn').disabled =
+    !choosing || state.teamSkips <= 0 || getSkipKeys('team').length === 0;
   if (complete) {
     document.getElementById('slot-main').textContent = 'Lineup ready';
     document.getElementById('slot-era-lbl').textContent = 'Set positions';
     document.getElementById('slot-instruction').textContent = 'Click any roster player to move them, then click Sim season.';
-  } else {
-    document.getElementById('spin-btn').disabled = false;
   }
 }
 
-function afterRosterChanged() {
+function afterRosterChanged(drafted) {
   renderRoundTrack();
   renderRosterRow();
   renderDraftScores();
-  document.getElementById('player-section').classList.add('hidden');
-  document.getElementById('slot-machine').classList.remove('active');
-  document.getElementById('skip-era-btn').disabled = true;
-  document.getElementById('skip-team-btn').disabled = true;
-  document.getElementById('spin-btn').innerHTML = '&#9654; Spin';
-
-  if (state.roster.every(Boolean)) {
+  if (!drafted) {
+    if (state.currentKey) showPlayers(state.currentKey);
     updateDraftControls();
     return;
   }
-
-  document.getElementById('slot-main').textContent = 'Spin to continue';
-  document.getElementById('slot-era-lbl').textContent = 'Round ' + (state.round+1);
-  document.getElementById('slot-instruction').textContent = 'Each spin reveals a franchise + era. You pick one player from that pool.';
+  state.currentKey = null;
+  state.currentPlayers = [];
+  document.getElementById('player-section').classList.add('hidden');
+  document.getElementById('slot-machine').classList.remove('active');
+  document.getElementById('spin-btn').innerHTML = '&#9654; Spin';
+  if (!state.roster.every(Boolean)) {
+    document.getElementById('slot-main').textContent = 'Spin to continue';
+    document.getElementById('slot-era-lbl').textContent = 'Round ' + (state.round+1);
+    document.getElementById('slot-instruction').textContent = 'Each spin reveals a franchise + era. You pick one player from that pool.';
+  }
   updateDraftControls();
 }
 
-// ─── SKIPS ──────────────────────────────────────────────────────────────────
-function skipEra() {
-  if (state.eraSkips <= 0) return;
-  const { era } = parseKey(state.currentKey);
-  const newKey = getRandomPlayableKey(k => parseKey(k).era !== era);
-  if (!newKey) {
-    document.getElementById('slot-instruction').textContent = 'No other eras have a valid player for your open positions.';
-    document.getElementById('skip-era-btn').disabled = true;
+// One skip of each kind per game; preserve the other category.
+function skip(kind) {
+  const counter = kind === 'era' ? 'eraSkips' : 'teamSkips';
+  if (state.spinning || !state.currentKey || state.roster.every(Boolean) || state[counter] <= 0) return;
+  const keys = getSkipKeys(kind);
+  if (!keys.length) {
+    updateDraftControls();
     return;
   }
-  state.eraSkips--;
-  document.getElementById('era-ct').textContent = '(used)';
-  document.getElementById('skip-era-btn').disabled = true;
-  state.currentKey = newKey;
-  const { era: e, team: tm } = parseKey(newKey);
-  document.getElementById('slot-era-lbl').textContent = e;
-  document.getElementById('slot-main').textContent = tm;
-  showPlayers(newKey);
+  state[counter]--;
+  clearPlacement();
+  state.currentKey = keys[Math.floor(Math.random() * keys.length)];
+  const { era, team } = parseKey(state.currentKey);
+  document.getElementById(kind + '-ct').textContent = '(used)';
+  document.getElementById('slot-era-lbl').textContent = era;
+  document.getElementById('slot-main').textContent = team;
+  document.getElementById('slot-instruction').textContent = 'Pick one player for your starting five';
+  renderRosterRow();
+  showPlayers(state.currentKey);
+  updateDraftControls();
+}
+
+function skipEra() {
+  skip('era');
 }
 
 function skipTeam() {
-  if (state.teamSkips <= 0) return;
-  const { era } = parseKey(state.currentKey);
-  const newKey = getRandomPlayableKey(k => parseKey(k).era === era && k !== state.currentKey);
-  if (!newKey) {
-    document.getElementById('slot-instruction').textContent = 'No other teams in this era have a valid player for your open positions.';
-    document.getElementById('skip-team-btn').disabled = true;
-    return;
-  }
-  state.teamSkips--;
-  document.getElementById('team-ct').textContent = '(used)';
-  document.getElementById('skip-team-btn').disabled = true;
-  state.currentKey = newKey;
-  const { era: e, team: tm } = parseKey(newKey);
-  document.getElementById('slot-era-lbl').textContent = e;
-  document.getElementById('slot-main').textContent = tm;
-  showPlayers(newKey);
+  skip('team');
 }
 
 // ─── SIMULATION ─────────────────────────────────────────────────────────────
@@ -1766,6 +1775,7 @@ function gradeLabel(g) {
 
 // ─── RESET ───────────────────────────────────────────────────────────────────
 function resetGame() {
+  clearInterval(state.spinInterval);
   state = { round:0, roster:[null,null,null,null,null], currentKey:null, currentPlayers:[], eraSkips:1, teamSkips:1, spinning:false, spinInterval:null, pendingPlayer:null, pendingPlayerIdx:null, pendingFromIdx:null };
   document.getElementById('screen-result').classList.add('hidden');
   document.getElementById('screen-sim').classList.add('hidden');
@@ -1777,6 +1787,7 @@ function resetGame() {
   document.getElementById('slot-machine').classList.remove('active');
   document.getElementById('spin-btn').innerHTML = '&#9654; Spin';
   document.getElementById('spin-btn').disabled = false;
+  document.getElementById('spin-btn').classList.remove('hidden');
   document.getElementById('sim-btn').classList.add('hidden');
   document.getElementById('skip-era-btn').disabled = true;
   document.getElementById('skip-team-btn').disabled = true;
