@@ -804,6 +804,12 @@
     .roster-score-row { grid-template-columns: repeat(2, 1fr); }
   }
 
+  .era-panel { border: 1px solid var(--gold-mid); border-radius: var(--r-lg); background: var(--surface); padding: 20px; margin-bottom: 24px; }
+  .era-panel .btn-row { margin: 0 0 12px; }
+  .era-panel p { color: var(--text-secondary); font-size: 13px; line-height: 1.65; margin: 12px 0; }
+  .era-panel #fit-summary, .pc-fit { color: var(--gold); }
+  .pc-fit { font-size: 11px; line-height: 1.5; margin-bottom: 10px; }
+  button:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
   /* scrollbar */
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -818,12 +824,22 @@
     <div class="header-rule"></div>
     <div class="header-eyebrow">Prime Year Edition</div>
     <div class="header-title">82<span>-0</span></div>
-    <p class="header-sub">Each player is locked to their single greatest season — not a career average, not a decade blend. Their true prime. Draft five legends and see if you can go undefeated.</p>
+    <p class="header-sub">Draft five legends from featured seasons. Roll an era, build a lineup that fits its playstyle, and chase the perfect 82–0 season.</p>
   </header>
 
   <!-- Draft screen -->
   <div id="screen-draft">
 
+    <section class="era-panel" aria-label="Game mode">
+      <div class="btn-row">
+        <button class="btn btn-primary" id="era-mode-btn" aria-pressed="true">Era Challenge</button>
+        <button class="btn btn-skip" id="classic-mode-btn" aria-pressed="false">Classic</button>
+      </div>
+      <p id="mode-description">Roll one era for your entire draft. Build a balanced five from that era to chase 82–0.</p>
+      <button class="btn btn-primary" id="roll-era-btn">Pick era · random</button>
+      <p id="era-description" aria-live="polite">Your era and its playstyle will appear here before you draft.</p>
+      <p id="fit-summary" aria-live="polite"></p>
+    </section>
     <div class="round-track" id="round-track"></div>
     <div class="roster-row" id="roster-row"></div>
     <div class="draft-score-row hidden" id="draft-score-row"></div>
@@ -870,7 +886,7 @@
       <div class="result-grade" id="result-grade"></div>
       <p class="result-verdict" id="result-verdict"></p>
 
-      <div class="section-label">Your prime-year starting five</div>
+      <div class="section-label">Your starting five</div>
       <div class="result-roster-grid" id="result-roster"></div>
 
       <div class="section-label">Team totals</div>
@@ -881,8 +897,10 @@
         <span id="weakness-text"></span>
       </div>
 
+      <p class="era-panel" id="result-fit"></p>
       <div class="section-label">Hardest games of the season</div>
       <div class="game-log" id="game-log"></div>
+      <details style="margin-top:20px"><summary>All 82 games</summary><div class="game-log" id="full-game-log"></div></details>
 
       <div class="btn-row" style="margin-top:24px">
         <button class="btn btn-primary" id="play-again-btn">&#9654; Play again</button>
@@ -1144,6 +1162,160 @@ const DB = {
   ],
 };
 
+const CHALLENGE_PLAYERS = {
+  "2010s_Hornets (2011–12)": [
+    {
+      "n": "Jarrett Jack",
+      "pos": "PG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "yr": "2011–12",
+      "why": "Steady lead guard: scoring and creation on a rebuilding team.",
+      "s": 62,
+      "d": 50,
+      "r": 35,
+      "p": 74,
+      "ppg": 15.6,
+      "rpg": 3.9,
+      "apg": 6.3
+    },
+    {
+      "n": "Greivis Vasquez",
+      "pos": "PG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "yr": "2011–12",
+      "why": "Pass-first reserve guard; useful creation with defensive tradeoffs.",
+      "s": 42,
+      "d": 42,
+      "r": 28,
+      "p": 70,
+      "ppg": 8.9,
+      "rpg": 2.6,
+      "apg": 5.4
+    },
+    {
+      "n": "Al-Farouq Aminu",
+      "pos": "SF",
+      "slots": [
+        "SF",
+        "PF"
+      ],
+      "yr": "2011–12",
+      "why": "Developing defensive wing who trades scoring for versatility.",
+      "s": 30,
+      "d": 64,
+      "r": 52,
+      "p": 24,
+      "ppg": 6,
+      "rpg": 4.7,
+      "apg": 1
+    },
+    {
+      "n": "Carl Landry",
+      "pos": "PF",
+      "yr": "2011–12",
+      "why": "Bench scoring inside, with limited playmaking and rim protection.",
+      "s": 54,
+      "d": 48,
+      "r": 54,
+      "p": 24,
+      "ppg": 12.5,
+      "rpg": 5.2,
+      "apg": 0.9
+    },
+    {
+      "n": "Jason Smith",
+      "pos": "C",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "2011–12",
+      "why": "Rotation big who can fill a frontcourt gap.",
+      "s": 44,
+      "d": 57,
+      "r": 52,
+      "p": 22,
+      "ppg": 9.9,
+      "rpg": 4.9,
+      "apg": 0.9
+    }
+  ],
+  "2020s_Jazz (2024–25)": [
+    {
+      "n": "Keyonte George",
+      "pos": "PG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "yr": "2024–25",
+      "why": "Young shot creator with scoring upside and defensive weaknesses.",
+      "s": 64,
+      "d": 38,
+      "r": 34,
+      "p": 70,
+      "ppg": 16.8,
+      "rpg": 3.8,
+      "apg": 5.6
+    },
+    {
+      "n": "Collin Sexton",
+      "pos": "SG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "yr": "2024–25",
+      "why": "Aggressive scoring guard; needs defensive support around him.",
+      "s": 72,
+      "d": 43,
+      "r": 28,
+      "p": 60,
+      "ppg": 18.4,
+      "rpg": 2.7,
+      "apg": 4.2
+    },
+    {
+      "n": "Walker Kessler",
+      "pos": "C",
+      "yr": "2024–25",
+      "why": "A valuable specialist: rim protection and rebounding on a weak team.",
+      "s": 44,
+      "d": 84,
+      "r": 88,
+      "p": 28,
+      "ppg": 11.1,
+      "rpg": 12.2,
+      "apg": 1.7
+    },
+    {
+      "n": "Kyle Filipowski",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "2024–25",
+      "why": "Developing big with complementary scoring and rebounding.",
+      "s": 42,
+      "d": 46,
+      "r": 61,
+      "p": 38,
+      "ppg": 9.6,
+      "rpg": 6.1,
+      "apg": 1.9
+    }
+  ]
+};
+Object.assign(DB, CHALLENGE_PLAYERS);
+const CHALLENGE_KEYS = Object.keys(CHALLENGE_PLAYERS);
+
 const ALL_KEYS = Object.keys(DB);
 const OPPONENTS = ['Celtics','Lakers','Warriors','Bulls','Heat','Spurs','Bucks','Knicks','Suns','76ers','Thunder','Nuggets','Nets','Mavs','Clippers','Raptors','Pistons','Jazz','Rockets','Pacers'];
 
@@ -1227,6 +1399,8 @@ const POSITION_ELIGIBILITY = {
 
 // ─── STATE ──────────────────────────────────────────────────────────────────
 let state = {
+  mode: 'era',
+  draftEra: null,
   round: 0,
   roster: [null,null,null,null,null], // indexed by POSITIONS
   currentKey: null,
@@ -1245,6 +1419,8 @@ function init() {
   renderRoundTrack();
   renderRosterRow();
   renderDraftScores();
+  renderEraPanel();
+  updateDraftControls();
 }
 
 function renderRoundTrack() {
@@ -1289,13 +1465,14 @@ function renderRosterRow() {
 
 // ─── SPIN ───────────────────────────────────────────────────────────────────
 function spin() {
-  if (state.spinning || state.currentKey || state.roster.every(Boolean)) return;
+  if (state.spinning || state.currentKey || state.roster.every(Boolean) || (state.mode === 'era' && !state.draftEra)) return;
   clearPlacement();
   document.getElementById('spin-btn').disabled = true;
   document.getElementById('player-section').classList.add('hidden');
   document.getElementById('skip-era-btn').disabled = true;
   document.getElementById('skip-team-btn').disabled = true;
   state.spinning = true;
+  renderEraPanel();
 
   const slotMachine = document.getElementById('slot-machine');
   slotMachine.classList.add('active');
@@ -1310,7 +1487,8 @@ function spin() {
   const tick = 60;
   state.spinInterval = setInterval(() => {
     t += tick;
-    const rk = ALL_KEYS[Math.floor(Math.random()*ALL_KEYS.length)];
+    const spinKeys = getPlayableKeys();
+    const rk = spinKeys[Math.floor(Math.random()*spinKeys.length)];
     const { era, team } = parseKey(rk);
     eraEl.textContent = era;
     mainEl.textContent = team;
@@ -1356,10 +1534,29 @@ function getOpenPositions(player) {
   if (isPlayerDrafted(player)) return [];
   return getPlayerPositions(player).filter(pos => {
     const posIdx = POSITIONS.indexOf(pos);
-    return posIdx !== -1 && state.roster[posIdx] === null;
+    if (posIdx === -1 || state.roster[posIdx] !== null) return false;
+    const next = state.roster.slice();
+    next[posIdx] = player;
+    return state.mode !== 'era' || canCompleteEraRoster(next);
   });
 }
 
+function canCompleteEraRoster(roster) {
+  const pool = ALL_KEYS.filter(k => parseKey(k).era === state.draftEra).flatMap(k => DB[k]);
+  const used = new Set(roster.filter(Boolean).map(p => p.n));
+  const empty = POSITIONS.map((pos,i) => ({pos,i})).filter(({i}) => !roster[i]);
+  function fill(index) {
+    if (index === empty.length) return true;
+    for (const p of pool) {
+      if (used.has(p.n) || !canPlayerPlay(p,empty[index].pos)) continue;
+      used.add(p.n);
+      if (fill(index+1)) return true;
+      used.delete(p.n);
+    }
+    return false;
+  }
+  return fill(0);
+}
 function isPlayerAvailable(player) {
   return getOpenPositions(player).length > 0;
 }
@@ -1369,7 +1566,7 @@ function hasAvailablePlayer(key) {
 }
 
 function getPlayableKeys(filterFn) {
-  return ALL_KEYS.filter(key => (!filterFn || filterFn(key)) && hasAvailablePlayer(key));
+  return ALL_KEYS.filter(key => (state.mode === 'era' ? parseKey(key).era === state.draftEra : !CHALLENGE_KEYS.includes(key)) && (!filterFn || filterFn(key)) && hasAvailablePlayer(key));
 }
 
 function getRandomPlayableKey(filterFn) {
@@ -1380,7 +1577,8 @@ function getRandomPlayableKey(filterFn) {
 function canPlacePlayerAt(player, pos, fromIdx) {
   const targetIdx = POSITIONS.indexOf(pos);
   if (!player || targetIdx === -1 || !canPlayerPlay(player, pos)) return false;
-  return buildLineupWith(player, targetIdx) !== null;
+  const next = buildLineupWith(player, targetIdx);
+  return next !== null && (state.mode !== 'era' || canCompleteEraRoster(next));
 }
 
 function getPlaceablePositions(player, fromIdx) {
@@ -1475,11 +1673,12 @@ function showPlayers(key) {
           <span class="pos-pick-label">${openPositions.length === 1 ? 'Click card or slot' : 'Choose slot'}</span>
           ${openPositions.map(pos => `<button class="pos-pick-btn" type="button" data-idx="${i}" data-pos="${pos}">${pos}</button>`).join('')}
         </div>`
-      : `<div class="pos-lock-note">${isPlayerDrafted(p) ? 'Already drafted' : 'No eligible open slot'}</div>`;
+      : `<div class="pos-lock-note">${isPlayerDrafted(p) ? 'Already drafted' : 'No safe slot for a complete five'}</div>`;
     return `<div class="player-card${taken?' unavailable':''}" data-idx="${i}">
       <div class="pc-name">${p.n}</div>
       <div class="pc-meta">${eligiblePositions.join('/')} · ${p.yr}</div>
       <div class="pc-prime">${p.why}</div>
+      ${state.mode === 'era' ? `<div class="pc-fit">Era fit ${Math.round(playerEraFit(p))}/100 · ${playerRoles(p).join(' · ') || 'Supporting player'}</div>` : ''}
       ${posButtons}
       <div class="stat-row">
         <span class="stat-lbl">SCR</span>
@@ -1563,6 +1762,7 @@ function renderScorePills(el, totals) {
 }
 
 function renderDraftScores() {
+  renderEraPanel();
   const el = document.getElementById('draft-score-row');
   if (!el) return;
   if (!state.roster.some(Boolean)) {
@@ -1591,9 +1791,10 @@ function updateDraftControls() {
   const spinBtn = document.getElementById('spin-btn');
   document.getElementById('sim-btn').classList.toggle('hidden', !complete);
   spinBtn.classList.toggle('hidden', choosing || complete);
-  spinBtn.disabled = complete || state.spinning || choosing;
+  spinBtn.disabled = complete || state.spinning || choosing || (state.mode === 'era' && !state.draftEra);
+  renderEraPanel();
   document.getElementById('skip-era-btn').disabled =
-    !choosing || state.eraSkips <= 0 || getSkipKeys('era').length === 0;
+    state.mode === 'era' || !choosing || state.eraSkips <= 0 || getSkipKeys('era').length === 0;
   document.getElementById('skip-team-btn').disabled =
     !choosing || state.teamSkips <= 0 || getSkipKeys('team').length === 0;
   if (complete) {
@@ -1648,6 +1849,7 @@ function skip(kind) {
 }
 
 function skipEra() {
+  if (state.mode === 'era') return;
   skip('era');
 }
 
@@ -1660,17 +1862,21 @@ function scoreRoster() {
   const r = state.roster;
   const avg = fn => Math.round(r.reduce((a,p) => a + (p ? p[fn] : 0), 0) / 5);
   const scr = avg('s'), def = avg('d'), reb = avg('r'), ply = avg('p');
-  const raw = (scr * 0.28) + (def * 0.27) + (reb * 0.22) + (ply * 0.23);
+  const base = (scr * 0.28) + (def * 0.27) + (reb * 0.22) + (ply * 0.23);
+  const fit = r.reduce((sum,p) => sum + (p ? playerEraFit(p) : 0), 0) / 5;
+  const coverage = rosterCoverage(r);
+  const bonus = state.mode === 'era' ? coverage.filter(c => c.met).length * 2 : 0;
+  const raw = state.mode === 'era' ? base * 0.6 + fit * 0.4 + bonus : base;
   const weaknesses = [];
   if (def < 60) weaknesses.push('Defensive liability — opponents will shoot freely.');
   if (reb < 55) weaknesses.push('Rebounding gap — second-chance points will pile up.');
   if (ply < 55) weaknesses.push('Playmaking thin — isolation-heavy, turnover-prone.');
   if (scr < 58) weaknesses.push('Scoring drought risk — stagnates against elite defenses.');
-  return { scr, def, reb, ply, raw, weakness: weaknesses[0] || null };
+  return { scr, def, reb, ply, raw, bonus, fit, weakness: weaknesses[0] || null };
 }
 
 function startSim() {
-  if (!state.roster.every(Boolean)) return;
+  if (!state.roster.every(Boolean) || (state.mode === 'era' && !state.draftEra)) return;
   clearPlacement();
   document.getElementById('screen-draft').classList.add('hidden');
   document.getElementById('screen-sim').classList.remove('hidden');
@@ -1681,21 +1887,9 @@ function startSim() {
   const recEl = document.getElementById('sim-record');
   const lbl = document.getElementById('sim-game-lbl');
 
-  // Pre-compute outcomes
-  const toughGames = [];
-  const outcomes = [];
-  for (let i=0;i<82;i++) {
-    const opp = OPPONENTS[Math.floor(Math.random()*OPPONENTS.length)];
-    const diff = Math.random();
-    const threshold = (scores.raw / 100) * 0.88 + 0.06;
-    const won = Math.random() < threshold;
-    const isTough = diff > 0.82;
-    const margin = won ? Math.ceil(Math.random()*14+1) : -Math.ceil(Math.random()*10+1);
-    outcomes.push(won);
-    if (isTough) toughGames.push({ g: i+1, opp, won, margin });
-  }
-
-  const totalW = outcomes.filter(Boolean).length;
+  const season = simulateSeason(scores);
+  const outcomes = season.games.map(game => game.won);
+  const toughGames = season.games.slice().sort((a,b) => b.rating - a.rating).slice(0,6).sort((a,b) => a.g - b.g);
 
   const iv = setInterval(() => {
     g++;
@@ -1706,7 +1900,7 @@ function startSim() {
     recEl.textContent = w + ' – ' + l;
     if (g >= 82) {
       clearInterval(iv);
-      setTimeout(() => showResult({ w, l, toughGames: toughGames.slice(0,6) }, scores), 500);
+      setTimeout(() => showResult({ w, l, toughGames, games:season.games }, scores), 500);
     }
   }, 22);
 }
@@ -1729,7 +1923,7 @@ function showResult(result, scores) {
   gradeEl.className = 'result-grade grade-' + grade;
 
   const verdicts = {
-    S: 'Perfection. This prime-year lineup goes down as the greatest team ever assembled. Every statistical category maxed out.',
+    S: 'Perfection. This prime-year lineup goes down as the greatest team ever assembled. A complete team, a great run, and all 82 wins.',
     A: 'Historic season. A legitimate 82-0 challenger — a few bad beats away from perfection.',
     B: 'Elite squad. Dominant for stretches but not quite bulletproof. Postseason contender.',
     C: 'Solid roster. Some gaps in construction showed up over a long season. Playoff-bound.',
@@ -1767,16 +1961,134 @@ function showResult(result, scores) {
   );
   if (perfect) lines.unshift('<div class="log-entry"><span style="color:var(--gold);font-weight:600">All 82 won. Perfection achieved.</span></div>');
   log.innerHTML = lines.join('');
+  document.getElementById('full-game-log').innerHTML = result.games.map(game =>
+    `<div class="log-entry"><span class="log-result ${game.won?'log-w':'log-l'}">${game.won?'W':'L'}</span><span>Game ${game.g} vs. ${game.opp}</span><span class="log-margin">${game.margin>0?'+':''}${game.margin}</span></div>`
+  ).join('');
+  document.getElementById('result-fit').textContent = state.mode === 'era'
+    ? state.draftEra+' · '+ERA_STYLES[state.draftEra].label+' · Team-fit bonus +'+scores.bonus+' · Overall '+scores.raw.toFixed(1)+'. Opponent strengths are game ratings; this is a fantasy schedule across eras.'
+    : 'Classic · Original simulation odds · Overall '+scores.raw.toFixed(1);
 }
 
 function gradeLabel(g) {
   return { S:'Perfect season', A:'Historic', B:'Elite', C:'Solid', D:'Rebuild' }[g];
 }
 
+
+/* Era Challenge ratings are game design values, not historical win forecasts.
+   Existing decade pools are retained, including boundary seasons such as 1959–60. */
+const ERA_STYLES = {
+  '1960s': { label:'Own the glass', detail:'Rebounding and defense lead the way.', weights:{s:.20,d:.30,r:.35,p:.15} },
+  '1970s': { label:'Inside-out basketball', detail:'Interior scoring, rebounding, and a strong defensive backbone.', weights:{s:.30,d:.25,r:.30,p:.15} },
+  '1980s': { label:'Move the ball', detail:'Scoring and playmaking power a flowing offense.', weights:{s:.30,d:.20,r:.15,p:.35} },
+  '1990s': { label:'Win the half court', detail:'Defense and reliable scoring carry tight games.', weights:{s:.30,d:.35,r:.20,p:.15} },
+  '2000s': { label:'Two-way execution', detail:'Defense, scoring, and a steady creator keep you in control.', weights:{s:.30,d:.30,r:.15,p:.25} },
+  '2010s': { label:'Create the advantage', detail:'Playmaking and scoring reward an offense with multiple threats.', weights:{s:.35,d:.20,r:.15,p:.30} },
+  '2020s': { label:'Versatile five', detail:'Combine scoring, playmaking, and versatile defense.', weights:{s:.30,d:.25,r:.15,p:.30} }
+};
+const CHALLENGE_OPPONENTS = [
+  {name:'2011–12 New Orleans Hornets',rating:43,tier:'Rebuilding'},
+  {name:'2024–25 Utah Jazz',rating:40,tier:'Rebuilding'},
+  {name:'2011–12 Charlotte Bobcats',rating:34,tier:'Rebuilding'},
+  {name:'2015–16 Philadelphia 76ers',rating:36,tier:'Rebuilding'},
+  ...OPPONENTS.map((name,i) => ({name, rating:54 + (i % 5)*3, tier:'League opponent'})),
+  {name:'Championship contender',rating:72,tier:'Contender'},
+  {name:'Championship contender',rating:74,tier:'Contender'}
+];
+function playerEraFit(p) {
+  const style = ERA_STYLES[state.draftEra];
+  return style ? Object.entries(style.weights).reduce((sum,[stat,weight]) => sum + p[stat]*weight,0) : p.s*.28+p.d*.27+p.r*.22+p.p*.23;
+}
+function playerRoles(p) {
+  return [p.s>=80?'Scorer':null,p.d>=78?'Stopper':null,p.r>=85?'Rebounder':null,p.p>=85?'Creator':null].filter(Boolean);
+}
+function rosterCoverage(roster) {
+  const players = roster.filter(Boolean);
+  return [
+    {label:'2 scorers (SCR 80+)',met:players.filter(p=>p.s>=80).length>=2},
+    {label:'2 stoppers (DEF 78+)',met:players.filter(p=>p.d>=78).length>=2},
+    {label:'1 rebounder (REB 85+)',met:players.some(p=>p.r>=85)},
+    {label:'1 creator (PLY 85+)',met:players.some(p=>p.p>=85)}
+  ];
+}
+function setMode(mode) {
+  if(state.round || state.spinning || state.currentKey) return;
+  state.mode = mode;
+  resetGame();
+}
+function rollDraftEra() {
+  if(state.mode!=='era' || state.draftEra || state.spinning || state.round || state.currentKey) return;
+  const eras = Object.keys(ERA_STYLES);
+  state.draftEra = eras[Math.floor(Math.random()*eras.length)];
+  document.getElementById('slot-main').textContent = 'Spin to begin';
+  document.getElementById('slot-era-lbl').textContent = state.draftEra;
+  updateDraftControls();
+}
+function renderEraPanel() {
+  const eraMode = state.mode === 'era';
+  const locked = Boolean(state.round || state.spinning || state.currentKey);
+  for(const mode of ['era','classic']) {
+    const button = document.getElementById(mode+'-mode-btn');
+    button.disabled = locked;
+    button.setAttribute('aria-pressed', String(state.mode===mode));
+    button.className = 'btn ' + (state.mode===mode?'btn-primary':'btn-skip');
+  }
+  const roll = document.getElementById('roll-era-btn');
+  roll.classList.toggle('hidden',!eraMode);
+  roll.disabled = Boolean(state.draftEra) || locked;
+  roll.textContent = state.draftEra ? state.draftEra + ' · locked for this run' : 'Pick era · random';
+  document.getElementById('skip-era-btn').classList.toggle('hidden',eraMode);
+  document.getElementById('mode-description').textContent = eraMode
+    ? 'One era for all five picks. Your draft uses that era’s featured season pools, including seasons crossing a decade boundary.'
+    : 'Original mixed-era draft and original simulation odds. One era skip and one team skip per run.';
+  const style = ERA_STYLES[state.draftEra];
+  if (!state.currentKey && !state.spinning && !state.roster.every(Boolean)) {
+    document.getElementById('slot-instruction').textContent = eraMode
+      ? (state.draftEra ? 'Each spin reveals a franchise from your locked era. Pick a player who fills a role.' : 'Pick your era above, then spin for a franchise.')
+      : 'Each spin reveals a franchise + era. You pick one player from that pool.';
+  }
+  document.getElementById('era-description').textContent = eraMode
+    ? (style ? state.draftEra+' · '+style.label+'. '+style.detail+' Each completed role target adds +2 overall. Strong teams reliably beat weaker opponents; only close matchups carry upset risk.' : 'Pick a random era before spinning. Your era stays locked until you play again.')
+    : 'Classic preserves the original challenge. Choose Era Challenge before drafting for team-fit bonuses and a varied schedule.';
+  document.getElementById('fit-summary').textContent = eraMode && state.draftEra
+    ? rosterCoverage(state.roster).map(c=>(c.met?'✓ ':'○ ')+c.label).join(' · ') + (state.roster.every(Boolean) ? ' · '+seasonOutlook(scoreRoster()) : '')
+    : '';
+}
+function seasonOutlook(scores) {
+  const expected = CHALLENGE_OPPONENTS.reduce((sum,o)=>sum+challengeWinChance(scores,o),0)/CHALLENGE_OPPONENTS.length*82;
+  return expected === 82 ? 'Perfect-season favorite: this lineup outclasses every opponent.' : 'Projected wins: '+expected.toFixed(1)+' / 82. Improve team fit to reduce close games.';
+}
+function challengeWinChance(scores, opponent) {
+  const advantage = scores.raw - opponent.rating;
+  // Game-day variation is bounded. A complete team 12 points stronger wins reliably.
+  return Math.max(0, Math.min(1, (advantage + 12) / 24));
+}
+function simulateSeason(scores, rng = Math.random) {
+  const games = [];
+  // Cycle through a shuffled pool so weak teams and contenders appear every season.
+  let schedule = [];
+  while(schedule.length < 82) {
+    const block = CHALLENGE_OPPONENTS.slice();
+    for(let i=block.length-1;i>0;i--) {
+      const j = Math.floor(rng()*(i+1));
+      [block[i],block[j]]=[block[j],block[i]];
+    }
+    schedule.push(...block);
+  }
+  for(let i=0;i<82;i++) {
+    const classic = state.mode === 'classic';
+    const opponent = classic ? {name:OPPONENTS[Math.floor(rng()*OPPONENTS.length)],rating:60,tier:'Classic'} : schedule[i];
+    const chance = classic ? (scores.raw/100)*.88+.06 : challengeWinChance(scores,opponent);
+    const won = rng()<chance;
+    const margin = won ? Math.ceil(rng()*14+1) : -Math.ceil(rng()*10+1);
+    games.push({g:i+1,opp:opponent.name,rating:opponent.rating,tier:opponent.tier,chance,won,margin});
+  }
+  return {games,w:games.filter(g=>g.won).length};
+}
+
 // ─── RESET ───────────────────────────────────────────────────────────────────
 function resetGame() {
   clearInterval(state.spinInterval);
-  state = { round:0, roster:[null,null,null,null,null], currentKey:null, currentPlayers:[], eraSkips:1, teamSkips:1, spinning:false, spinInterval:null, pendingPlayer:null, pendingPlayerIdx:null, pendingFromIdx:null };
+  state = { mode:state.mode || 'era', draftEra:null, round:0, roster:[null,null,null,null,null], currentKey:null, currentPlayers:[], eraSkips:1, teamSkips:1, spinning:false, spinInterval:null, pendingPlayer:null, pendingPlayerIdx:null, pendingFromIdx:null };
   document.getElementById('screen-result').classList.add('hidden');
   document.getElementById('screen-sim').classList.add('hidden');
   document.getElementById('screen-draft').classList.remove('hidden');
@@ -1797,10 +2109,14 @@ function resetGame() {
   renderRoundTrack();
   renderRosterRow();
   renderDraftScores();
+  updateDraftControls();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
   init();
+  document.getElementById('roll-era-btn').addEventListener('click', rollDraftEra);
+  document.getElementById('era-mode-btn').addEventListener('click', () => setMode('era'));
+  document.getElementById('classic-mode-btn').addEventListener('click', () => setMode('classic'));
   document.getElementById('spin-btn').addEventListener('click', spin);
   document.getElementById('sim-btn').addEventListener('click', startSim);
   document.getElementById('skip-era-btn').addEventListener('click', skipEra);
