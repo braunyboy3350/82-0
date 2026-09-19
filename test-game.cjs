@@ -1,14 +1,19 @@
 const fs = require('node:fs');
 const script = fs.readFileSync(__dirname + '/index.html', 'utf8').match(/<script>([\s\S]*?)<\/script>/)[1];
 const tests = `
+
 function assert(ok,message){if(!ok)throw Error(message);}
 let seed=123456789;
 function rng(){seed=(1664525*seed+1013904223)>>>0;return seed/4294967296;}
 const results=[];
 for(const era of Object.keys(ERA_STYLES)){
  state.mode='era';state.draftEra=era;state.roster=[null,null,null,null,null];
- assert(getPlayableKeys().every(k=>parseKey(k).era===era),'Era lock failed');
- const pool=ALL_KEYS.filter(k=>parseKey(k).era===era).flatMap(k=>DB[k]);
+ assert(getPlayableKeys().length===48,'Every pool must be available in '+era);
+ assert(new Set(getPlayableKeys().map(franchiseForKey)).size===30,'Missing franchise');
+ const pool=ALL_KEYS.flatMap(k=>DB[k]);
+ const top=POSITIONS.map(pos=>pool.filter(p=>canPlayerPlay(p,pos)).sort((a,b)=>
+  (b.s*.28+b.d*.27+b.r*.22+b.p*.23)*.6+playerEraFit(b)*.4 -
+  ((a.s*.28+a.d*.27+a.r*.22+a.p*.23)*.6+playerEraFit(a)*.4)).slice(0,7));
  let best=null,worst=null,legal=0;
  function visit(roster){
    if(roster.length===5){
@@ -17,11 +22,13 @@ for(const era of Object.keys(ERA_STYLES)){
      if(!worst||score.raw<worst.score.raw)worst={score,roster:roster.slice()};
      return;
    }
-   for(const p of pool)if(canPlayerPlay(p,POSITIONS[roster.length])&&!roster.some(q=>q.n===p.n))visit([...roster,p]);
+   for(const p of top[roster.length])if(canPlayerPlay(p,POSITIONS[roster.length])&&!roster.some(q=>q.n===p.n))visit([...roster,p]);
  }
  visit([]);
  assert(best,'No legal lineup for '+era);
- assert(best.score.raw>worst.score.raw+10,'No meaningful skill gap');
+ const weak=POSITIONS.map(pos=>pool.filter(p=>canPlayerPlay(p,pos)).sort((a,b)=>playerEraFit(a)-playerEraFit(b))[0]);
+ state.roster=weak;
+ assert(best.score.raw>scoreRoster().raw+15,'No meaningful skill gap');
  state.roster=best.roster;
  let perfect=0,wins=0;
  for(let i=0;i<1000;i++){
@@ -32,8 +39,8 @@ for(const era of Object.keys(ERA_STYLES)){
   assert(season.games.every(g=>g.chance>=0&&g.chance<=1),'Invalid win probability');
   perfect+=Number(season.w===82);wins+=season.w;
  }
- assert(perfect>=50,'82–0 too rare for strongest '+era+' lineup');
- // Random legal draft paths must all finish and remain in their era.
+ assert(perfect===1000,'An elite lineup should reliably go 82–0 in '+era);
+ // Mixed-era random drafts must finish with five distinct names in legal positions.
  for(let run=0;run<200;run++){
   state.roster=[null,null,null,null,null];
   for(let pick=0;pick<5;pick++){
@@ -49,6 +56,7 @@ for(const era of Object.keys(ERA_STYLES)){
   }
   assert(state.roster.every(Boolean),'Incomplete draft');
   assert(new Set(state.roster.map(p=>p.n)).size===5,'Duplicate player');
+  assert(state.roster.every((p,i)=>canPlayerPlay(p,POSITIONS[i])),'Illegal position');
  }
  results.push({era,legalLineups:legal,strongLineupAverageWins:wins/1000,strongLineupPerfectSeasons:perfect+'/1000'});
 }
@@ -62,7 +70,22 @@ assert(challengeWinChance({raw:80},{rating:40})>challengeWinChance({raw:80},{rat
 assert(challengeWinChance({raw:85},{rating:65})>challengeWinChance({raw:65},{rating:65}),'Roster strength ignored');
 assert(challengeWinChance({raw:86},{rating:74})===1,'Elite team should reliably win');
 assert(getPlayableKeys().every(k=>!CHALLENGE_KEYS.includes(k)),'Classic pool changed');
+assert(ALL_KEYS.length===48,'Pool count');
+assert(Object.values(DB).flat().length===215,'Player-season count');
+for(const player of Object.values(DB).flat()){
+ assert(['s','d','r','p'].every(k=>Number.isFinite(player[k])&&player[k]>=0&&player[k]<=100),'Invalid ratings: '+player.n);
+ assert(['ppg','rpg','apg'].every(k=>Number.isFinite(player[k])&&player[k]>=0),'Invalid stats: '+player.n);
+ assert(getPlayerPositions(player).every(pos=>POSITIONS.includes(pos)),'Invalid position: '+player.n);
+}
+state.mode='era';state.roster=[null,null,null,null,null];
+state.currentKey=ALL_KEYS.find(k=>franchiseForKey(k)==='Lakers');
+assert(getSkipKeys('team').every(k=>franchiseForKey(k)!=='Lakers'),'Skip repeats franchise');
+const passer={s:60,d:60,r:30,p:99};
+state.draftEra='1960s';const oldFit=playerEraFit(passer),oldTargets=rosterCoverage([]);
+state.draftEra='1980s';
+assert(playerEraFit(passer)>oldFit+10,'Era does not reward different strengths');
+assert(JSON.stringify(rosterCoverage([]))!==JSON.stringify(oldTargets),'Era targets unchanged');
 return results;
+
 `;
-console.table(new Function('document', script + tests)({ addEventListener() {} }));
-console.log('All checks passed: 7,000 seasons, 1,400 draft paths, Classic compatibility.');
+console.table(new Function('document', script + '\n' + tests)({addEventListener(){}}));

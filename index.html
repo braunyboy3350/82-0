@@ -835,10 +835,11 @@
         <button class="btn btn-primary" id="era-mode-btn" aria-pressed="true">Era Challenge</button>
         <button class="btn btn-skip" id="classic-mode-btn" aria-pressed="false">Classic</button>
       </div>
-      <p id="mode-description">Roll one era for your entire draft. Build a balanced five from that era to chase 82–0.</p>
+      <p id="mode-description">Every franchise is available. Roll an era to set the playstyle, then build a five that fits.</p>
       <button class="btn btn-primary" id="roll-era-btn">Pick era · random</button>
       <p id="era-description" aria-live="polite">Your era and its playstyle will appear here before you draft.</p>
       <p id="fit-summary" aria-live="polite"></p>
+      <details><summary id="pool-summary">Browse draft teams</summary><div id="pool-list"></div></details>
     </section>
     <div class="round-track" id="round-track"></div>
     <div class="roster-row" id="roster-row"></div>
@@ -1313,6 +1314,1871 @@ const CHALLENGE_PLAYERS = {
     }
   ]
 };
+// Featured team-season expansion. Source table is recorded in ROSTER_SOURCES.md.
+const TEAM_EXPANSION = {
+  "1960s_Royals (1963–64)": [
+    {
+      "n": "Oscar Robertson",
+      "pos": "PG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "yr": "1963–64",
+      "why": "Elite scoring and creation from a big guard.",
+      "s": 94,
+      "d": 72,
+      "r": 68,
+      "p": 98,
+      "ppg": 31.4,
+      "rpg": 9.9,
+      "apg": 11
+    },
+    {
+      "n": "Adrian Smith",
+      "pos": "PG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "yr": "1963–64",
+      "why": "Complementary guard; a modest scoring option.",
+      "s": 45,
+      "d": 46,
+      "r": 25,
+      "p": 45,
+      "ppg": 9.4,
+      "rpg": 2.2,
+      "apg": 2.2
+    },
+    {
+      "n": "Jack Twyman",
+      "pos": "SF",
+      "slots": [
+        "SF"
+      ],
+      "yr": "1963–64",
+      "why": "Scoring wing with limited playmaking.",
+      "s": 64,
+      "d": 50,
+      "r": 52,
+      "p": 38,
+      "ppg": 15.9,
+      "rpg": 5.4,
+      "apg": 2
+    },
+    {
+      "n": "Jerry Lucas",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "1963–64",
+      "why": "Elite rebounder who strengthens an interior lineup.",
+      "s": 68,
+      "d": 68,
+      "r": 96,
+      "p": 46,
+      "ppg": 17.7,
+      "rpg": 17.4,
+      "apg": 2.6
+    },
+    {
+      "n": "Wayne Embry",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "yr": "1963–64",
+      "why": "Physical center with dependable rebounding.",
+      "s": 65,
+      "d": 72,
+      "r": 84,
+      "p": 28,
+      "ppg": 17.3,
+      "rpg": 11.6,
+      "apg": 1.4
+    }
+  ],
+  "1960s_Hawks (1967–68)": [
+    {
+      "n": "Lenny Wilkens",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "yr": "1967–68",
+      "why": "A floor general who supplies scoring and assists.",
+      "s": 76,
+      "d": 65,
+      "r": 48,
+      "p": 91,
+      "ppg": 20,
+      "rpg": 5.3,
+      "apg": 8.3
+    },
+    {
+      "n": "Lou Hudson",
+      "pos": "SG",
+      "slots": [
+        "SG",
+        "SF"
+      ],
+      "yr": "1967–68",
+      "why": "Young wing scorer with room to grow.",
+      "s": 56,
+      "d": 52,
+      "r": 40,
+      "p": 30,
+      "ppg": 12.5,
+      "rpg": 4.2,
+      "apg": 1.4
+    },
+    {
+      "n": "Joe Caldwell",
+      "pos": "SG",
+      "slots": [
+        "SG",
+        "SF"
+      ],
+      "yr": "1967–68",
+      "why": "Athletic wing with two-way value.",
+      "s": 65,
+      "d": 76,
+      "r": 42,
+      "p": 48,
+      "ppg": 16.4,
+      "rpg": 4.3,
+      "apg": 3
+    },
+    {
+      "n": "Bill Bridges",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "1967–68",
+      "why": "Rebounding and defensive support in the frontcourt.",
+      "s": 58,
+      "d": 80,
+      "r": 91,
+      "p": 48,
+      "ppg": 15.6,
+      "rpg": 13.4,
+      "apg": 3.1
+    },
+    {
+      "n": "Zelmo Beaty",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "yr": "1967–68",
+      "why": "Interior scoring paired with strong rebounding.",
+      "s": 78,
+      "d": 74,
+      "r": 86,
+      "p": 35,
+      "ppg": 21.1,
+      "rpg": 11.7,
+      "apg": 2.1
+    }
+  ],
+  "1970s_Knicks (1972–73)": [
+    {
+      "n": "Walt Frazier",
+      "pos": "PG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "yr": "1972–73",
+      "why": "Two-way lead guard for a balanced half-court lineup.",
+      "s": 82,
+      "d": 94,
+      "r": 58,
+      "p": 85,
+      "ppg": 21.1,
+      "rpg": 7.3,
+      "apg": 5.9
+    },
+    {
+      "n": "Earl Monroe",
+      "pos": "PG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "yr": "1972–73",
+      "why": "Creative scoring guard who adds offensive variety.",
+      "s": 68,
+      "d": 58,
+      "r": 30,
+      "p": 65,
+      "ppg": 15.5,
+      "rpg": 3.3,
+      "apg": 3.8
+    },
+    {
+      "n": "Bill Bradley",
+      "pos": "SG",
+      "slots": [
+        "SG",
+        "SF"
+      ],
+      "yr": "1972–73",
+      "why": "Unselfish wing who keeps the offense moving.",
+      "s": 65,
+      "d": 65,
+      "r": 36,
+      "p": 66,
+      "ppg": 16.1,
+      "rpg": 3.7,
+      "apg": 4.5
+    },
+    {
+      "n": "Dave DeBusschere",
+      "pos": "SF",
+      "slots": [
+        "SF",
+        "PF"
+      ],
+      "yr": "1972–73",
+      "why": "Defensive forward with strong rebounding.",
+      "s": 64,
+      "d": 94,
+      "r": 85,
+      "p": 52,
+      "ppg": 16.3,
+      "rpg": 10.2,
+      "apg": 3.4
+    },
+    {
+      "n": "Willis Reed",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "1972–73",
+      "why": "Veteran interior anchor in his championship season.",
+      "s": 48,
+      "d": 82,
+      "r": 75,
+      "p": 30,
+      "ppg": 11,
+      "rpg": 8.6,
+      "apg": 1.8
+    }
+  ],
+  "1970s_Trail Blazers (1976–77)": [
+    {
+      "n": "Dave Twardzik",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "yr": "1976–77",
+      "why": "Efficient complementary guard in a passing offense.",
+      "s": 46,
+      "d": 62,
+      "r": 27,
+      "p": 60,
+      "ppg": 10.3,
+      "rpg": 2.7,
+      "apg": 3.3
+    },
+    {
+      "n": "Lionel Hollins",
+      "pos": "PG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "yr": "1976–77",
+      "why": "Defensive guard who can also initiate the offense.",
+      "s": 60,
+      "d": 84,
+      "r": 28,
+      "p": 68,
+      "ppg": 14.7,
+      "rpg": 2.8,
+      "apg": 4.1
+    },
+    {
+      "n": "Bob Gross",
+      "pos": "SF",
+      "slots": [
+        "SF"
+      ],
+      "yr": "1976–77",
+      "why": "A connective wing with useful defense.",
+      "s": 49,
+      "d": 74,
+      "r": 48,
+      "p": 52,
+      "ppg": 11.4,
+      "rpg": 4.8,
+      "apg": 3
+    },
+    {
+      "n": "Maurice Lucas",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "1976–77",
+      "why": "Physical interior scorer and rebounder.",
+      "s": 77,
+      "d": 82,
+      "r": 87,
+      "p": 45,
+      "ppg": 20.2,
+      "rpg": 11.4,
+      "apg": 2.9
+    },
+    {
+      "n": "Bill Walton",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "yr": "1976–77",
+      "why": "Rim protection, rebounding, and passing from the middle.",
+      "s": 72,
+      "d": 96,
+      "r": 95,
+      "p": 72,
+      "ppg": 18.6,
+      "rpg": 14.4,
+      "apg": 3.8
+    }
+  ],
+  "1980s_Pistons (1988–89)": [
+    {
+      "n": "Isiah Thomas",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "yr": "1988–89",
+      "why": "Lead creator who controls the offense.",
+      "s": 77,
+      "d": 75,
+      "r": 32,
+      "p": 94,
+      "ppg": 18.2,
+      "rpg": 3.4,
+      "apg": 8.3
+    },
+    {
+      "n": "Joe Dumars",
+      "pos": "PG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "yr": "1988–89",
+      "why": "Lockdown guard with secondary playmaking.",
+      "s": 73,
+      "d": 93,
+      "r": 25,
+      "p": 79,
+      "ppg": 17.2,
+      "rpg": 2.5,
+      "apg": 5.7
+    },
+    {
+      "n": "Dennis Rodman",
+      "pos": "SF",
+      "slots": [
+        "SF",
+        "PF"
+      ],
+      "yr": "1988–89",
+      "why": "Defensive specialist and relentless rebounder.",
+      "s": 35,
+      "d": 97,
+      "r": 88,
+      "p": 26,
+      "ppg": 9,
+      "rpg": 9.4,
+      "apg": 1.2
+    },
+    {
+      "n": "Rick Mahorn",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "1988–89",
+      "why": "Physical frontcourt defense with limited offense.",
+      "s": 30,
+      "d": 80,
+      "r": 68,
+      "p": 18,
+      "ppg": 7.2,
+      "rpg": 6.9,
+      "apg": 0.8
+    },
+    {
+      "n": "Bill Laimbeer",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "yr": "1988–89",
+      "why": "Rebounding center with complementary scoring.",
+      "s": 56,
+      "d": 80,
+      "r": 83,
+      "p": 40,
+      "ppg": 13.7,
+      "rpg": 9.6,
+      "apg": 2.2
+    }
+  ],
+  "1980s_Hawks (1986–87)": [
+    {
+      "n": "Doc Rivers",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "yr": "1986–87",
+      "why": "Pass-first creator with active perimeter defense.",
+      "s": 54,
+      "d": 80,
+      "r": 35,
+      "p": 94,
+      "ppg": 12.8,
+      "rpg": 3.6,
+      "apg": 10
+    },
+    {
+      "n": "Randy Wittman",
+      "pos": "SG",
+      "slots": [
+        "SG"
+      ],
+      "yr": "1986–87",
+      "why": "Supporting scorer with defensive tradeoffs.",
+      "s": 55,
+      "d": 47,
+      "r": 18,
+      "p": 50,
+      "ppg": 12.7,
+      "rpg": 1.7,
+      "apg": 3
+    },
+    {
+      "n": "Dominique Wilkins",
+      "pos": "SF",
+      "slots": [
+        "SF"
+      ],
+      "yr": "1986–87",
+      "why": "Explosive scoring wing who needs defensive support.",
+      "s": 95,
+      "d": 58,
+      "r": 58,
+      "p": 53,
+      "ppg": 29,
+      "rpg": 6.2,
+      "apg": 3.3
+    },
+    {
+      "n": "Kevin Willis",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "1986–87",
+      "why": "Interior scoring and rebounding, with little creation.",
+      "s": 62,
+      "d": 64,
+      "r": 85,
+      "p": 18,
+      "ppg": 16.1,
+      "rpg": 10.5,
+      "apg": 0.8
+    },
+    {
+      "n": "Tree Rollins",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "yr": "1986–87",
+      "why": "Rim-protection specialist with a small offensive role.",
+      "s": 22,
+      "d": 86,
+      "r": 64,
+      "p": 14,
+      "ppg": 5.4,
+      "rpg": 6.5,
+      "apg": 0.3
+    }
+  ],
+  "1990s_Rockets (1993–94)": [
+    {
+      "n": "Kenny Smith",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "yr": "1993–94",
+      "why": "Complementary guard who supports a star-led attack.",
+      "s": 52,
+      "d": 52,
+      "r": 20,
+      "p": 65,
+      "ppg": 11.6,
+      "rpg": 1.8,
+      "apg": 4.2
+    },
+    {
+      "n": "Vernon Maxwell",
+      "pos": "SG",
+      "slots": [
+        "SG"
+      ],
+      "yr": "1993–94",
+      "why": "Perimeter defender with secondary creation.",
+      "s": 59,
+      "d": 76,
+      "r": 30,
+      "p": 70,
+      "ppg": 13.6,
+      "rpg": 3.1,
+      "apg": 5.1
+    },
+    {
+      "n": "Robert Horry",
+      "pos": "SF",
+      "slots": [
+        "SF",
+        "PF"
+      ],
+      "yr": "1993–94",
+      "why": "Versatile defensive forward who connects the lineup.",
+      "s": 44,
+      "d": 80,
+      "r": 55,
+      "p": 49,
+      "ppg": 9.9,
+      "rpg": 5.4,
+      "apg": 2.9
+    },
+    {
+      "n": "Otis Thorpe",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "1993–94",
+      "why": "Reliable rebounder and interior finisher.",
+      "s": 56,
+      "d": 72,
+      "r": 85,
+      "p": 38,
+      "ppg": 14,
+      "rpg": 10.6,
+      "apg": 2.3
+    },
+    {
+      "n": "Hakeem Olajuwon",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "yr": "1993–94",
+      "why": "Elite post scoring and rim protection in one player.",
+      "s": 94,
+      "d": 99,
+      "r": 91,
+      "p": 60,
+      "ppg": 27.3,
+      "rpg": 11.9,
+      "apg": 3.6
+    }
+  ],
+  "1990s_Magic (1994–95)": [
+    {
+      "n": "Penny Hardaway",
+      "pos": "PG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "yr": "1994–95",
+      "why": "Big lead guard with scoring and passing versatility.",
+      "s": 83,
+      "d": 75,
+      "r": 42,
+      "p": 89,
+      "ppg": 20.9,
+      "rpg": 4.4,
+      "apg": 7.2
+    },
+    {
+      "n": "Nick Anderson",
+      "pos": "SG",
+      "slots": [
+        "SG",
+        "SF"
+      ],
+      "yr": "1994–95",
+      "why": "Two-way perimeter support with secondary passing.",
+      "s": 66,
+      "d": 75,
+      "r": 43,
+      "p": 62,
+      "ppg": 15.8,
+      "rpg": 4.4,
+      "apg": 4.1
+    },
+    {
+      "n": "Dennis Scott",
+      "pos": "SF",
+      "slots": [
+        "SF"
+      ],
+      "yr": "1994–95",
+      "why": "Supporting scorer who needs defensive cover.",
+      "s": 61,
+      "d": 44,
+      "r": 25,
+      "p": 38,
+      "ppg": 12.9,
+      "rpg": 2.4,
+      "apg": 2.1
+    },
+    {
+      "n": "Horace Grant",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "1994–95",
+      "why": "Defensive frontcourt glue with strong rebounding.",
+      "s": 50,
+      "d": 90,
+      "r": 83,
+      "p": 40,
+      "ppg": 12.8,
+      "rpg": 9.7,
+      "apg": 2.3
+    },
+    {
+      "n": "Shaquille O'Neal",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "yr": "1994–95",
+      "why": "Dominant interior scorer with elite physical presence.",
+      "s": 97,
+      "d": 86,
+      "r": 91,
+      "p": 43,
+      "ppg": 29.3,
+      "rpg": 11.4,
+      "apg": 2.7
+    }
+  ],
+  "2000s_Pistons (2003–04)": [
+    {
+      "n": "Chauncey Billups",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "yr": "2003–04",
+      "why": "A steady two-way guard to organize the lineup.",
+      "s": 73,
+      "d": 83,
+      "r": 33,
+      "p": 85,
+      "ppg": 16.9,
+      "rpg": 3.5,
+      "apg": 5.7
+    },
+    {
+      "n": "Richard Hamilton",
+      "pos": "SG",
+      "slots": [
+        "SG"
+      ],
+      "yr": "2003–04",
+      "why": "Off-ball scorer with useful secondary passing.",
+      "s": 76,
+      "d": 70,
+      "r": 34,
+      "p": 62,
+      "ppg": 17.6,
+      "rpg": 3.6,
+      "apg": 4
+    },
+    {
+      "n": "Tayshaun Prince",
+      "pos": "SF",
+      "slots": [
+        "SF"
+      ],
+      "yr": "2003–04",
+      "why": "Long defensive wing with a complementary offensive role.",
+      "s": 44,
+      "d": 88,
+      "r": 48,
+      "p": 40,
+      "ppg": 10.3,
+      "rpg": 4.8,
+      "apg": 2.3
+    },
+    {
+      "n": "Rasheed Wallace",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "2003–04",
+      "why": "Versatile big; stats cover his 22 Detroit games.",
+      "s": 59,
+      "d": 88,
+      "r": 70,
+      "p": 34,
+      "ppg": 13.7,
+      "rpg": 7,
+      "apg": 1.8
+    },
+    {
+      "n": "Ben Wallace",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "2003–04",
+      "why": "Elite defensive anchor and rebounder.",
+      "s": 32,
+      "d": 99,
+      "r": 94,
+      "p": 28,
+      "ppg": 9.5,
+      "rpg": 12.4,
+      "apg": 1.7
+    }
+  ],
+  "2000s_Mavericks (2006–07)": [
+    {
+      "n": "Jason Terry",
+      "pos": "PG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "yr": "2006–07",
+      "why": "Scoring guard with secondary playmaking.",
+      "s": 73,
+      "d": 52,
+      "r": 28,
+      "p": 72,
+      "ppg": 16.7,
+      "rpg": 2.9,
+      "apg": 5.2
+    },
+    {
+      "n": "Devin Harris",
+      "pos": "PG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "yr": "2006–07",
+      "why": "Quick guard with defense and complementary creation.",
+      "s": 45,
+      "d": 72,
+      "r": 25,
+      "p": 61,
+      "ppg": 10.2,
+      "rpg": 2.5,
+      "apg": 3.7
+    },
+    {
+      "n": "Josh Howard",
+      "pos": "SF",
+      "slots": [
+        "SF"
+      ],
+      "yr": "2006–07",
+      "why": "Two-way wing who contributes on the glass.",
+      "s": 77,
+      "d": 76,
+      "r": 62,
+      "p": 32,
+      "ppg": 18.9,
+      "rpg": 6.8,
+      "apg": 1.8
+    },
+    {
+      "n": "Dirk Nowitzki",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "2006–07",
+      "why": "Elite scoring big who creates a different offensive shape.",
+      "s": 94,
+      "d": 62,
+      "r": 80,
+      "p": 54,
+      "ppg": 24.6,
+      "rpg": 8.9,
+      "apg": 3.4
+    },
+    {
+      "n": "Erick Dampier",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "yr": "2006–07",
+      "why": "Rebounding center who needs scorers around him.",
+      "s": 28,
+      "d": 71,
+      "r": 74,
+      "p": 15,
+      "ppg": 7.1,
+      "rpg": 7.4,
+      "apg": 0.6
+    }
+  ],
+  "2010s_Raptors (2018–19)": [
+    {
+      "n": "Kyle Lowry",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "yr": "2018–19",
+      "why": "Floor general with defense and strong passing.",
+      "s": 64,
+      "d": 83,
+      "r": 45,
+      "p": 92,
+      "ppg": 14.2,
+      "rpg": 4.8,
+      "apg": 8.7
+    },
+    {
+      "n": "Danny Green",
+      "pos": "SG",
+      "slots": [
+        "SG",
+        "SF"
+      ],
+      "yr": "2018–19",
+      "why": "Defensive wing and complementary scorer.",
+      "s": 51,
+      "d": 84,
+      "r": 38,
+      "p": 30,
+      "ppg": 10.3,
+      "rpg": 4,
+      "apg": 1.6
+    },
+    {
+      "n": "Kawhi Leonard",
+      "pos": "SF",
+      "slots": [
+        "SF",
+        "PF"
+      ],
+      "yr": "2018–19",
+      "why": "Elite two-way wing in his Toronto season.",
+      "s": 94,
+      "d": 92,
+      "r": 68,
+      "p": 56,
+      "ppg": 26.6,
+      "rpg": 7.3,
+      "apg": 3.3
+    },
+    {
+      "n": "Pascal Siakam",
+      "pos": "SF",
+      "slots": [
+        "SF",
+        "PF"
+      ],
+      "yr": "2018–19",
+      "why": "Versatile forward who adds scoring and defense.",
+      "s": 72,
+      "d": 80,
+      "r": 65,
+      "p": 52,
+      "ppg": 16.9,
+      "rpg": 6.9,
+      "apg": 3.1
+    },
+    {
+      "n": "Serge Ibaka",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "2018–19",
+      "why": "Interior defense and scoring with limited playmaking.",
+      "s": 61,
+      "d": 82,
+      "r": 76,
+      "p": 25,
+      "ppg": 15,
+      "rpg": 8.1,
+      "apg": 1.3
+    }
+  ],
+  "2010s_Grizzlies (2012–13)": [
+    {
+      "n": "Mike Conley",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "yr": "2012–13",
+      "why": "Controlled playmaking and strong perimeter defense.",
+      "s": 64,
+      "d": 87,
+      "r": 28,
+      "p": 83,
+      "ppg": 14.6,
+      "rpg": 2.8,
+      "apg": 6.1
+    },
+    {
+      "n": "Tony Allen",
+      "pos": "SG",
+      "slots": [
+        "SG",
+        "SF"
+      ],
+      "yr": "2012–13",
+      "why": "Lockdown perimeter specialist with limited offense.",
+      "s": 35,
+      "d": 98,
+      "r": 45,
+      "p": 25,
+      "ppg": 8.9,
+      "rpg": 4.6,
+      "apg": 1.2
+    },
+    {
+      "n": "Tayshaun Prince",
+      "pos": "SF",
+      "slots": [
+        "SF"
+      ],
+      "yr": "2012–13",
+      "why": "Veteran wing; stats cover his 37 Memphis games.",
+      "s": 38,
+      "d": 80,
+      "r": 42,
+      "p": 41,
+      "ppg": 8.8,
+      "rpg": 4.2,
+      "apg": 2.3
+    },
+    {
+      "n": "Zach Randolph",
+      "pos": "PF",
+      "slots": [
+        "PF"
+      ],
+      "yr": "2012–13",
+      "why": "Post scorer and rebounder for a physical frontcourt.",
+      "s": 66,
+      "d": 62,
+      "r": 90,
+      "p": 25,
+      "ppg": 15.4,
+      "rpg": 11.2,
+      "apg": 1.4
+    },
+    {
+      "n": "Marc Gasol",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "yr": "2012–13",
+      "why": "Defensive anchor with passing from the high post.",
+      "s": 61,
+      "d": 97,
+      "r": 72,
+      "p": 72,
+      "ppg": 14.1,
+      "rpg": 7.8,
+      "apg": 4
+    }
+  ],
+  "2020s_Thunder (2024–25)": [
+    {
+      "n": "Shai Gilgeous-Alexander",
+      "pos": "PG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "yr": "2024–25",
+      "why": "Elite lead scorer with creation and defensive activity.",
+      "s": 99,
+      "d": 86,
+      "r": 46,
+      "p": 87,
+      "ppg": 32.7,
+      "rpg": 5,
+      "apg": 6.4
+    },
+    {
+      "n": "Luguentz Dort",
+      "pos": "SG",
+      "slots": [
+        "SG",
+        "SF"
+      ],
+      "yr": "2024–25",
+      "why": "Perimeter stopper who complements high-usage scorers.",
+      "s": 49,
+      "d": 95,
+      "r": 40,
+      "p": 30,
+      "ppg": 10.1,
+      "rpg": 4.1,
+      "apg": 1.6
+    },
+    {
+      "n": "Jalen Williams",
+      "pos": "SG",
+      "slots": [
+        "SG",
+        "SF",
+        "PF"
+      ],
+      "yr": "2024–25",
+      "why": "Versatile two-way creator across the wing positions.",
+      "s": 84,
+      "d": 90,
+      "r": 50,
+      "p": 75,
+      "ppg": 21.6,
+      "rpg": 5.3,
+      "apg": 5.1
+    },
+    {
+      "n": "Chet Holmgren",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "2024–25",
+      "why": "Rim-protecting big with complementary scoring.",
+      "s": 65,
+      "d": 91,
+      "r": 75,
+      "p": 37,
+      "ppg": 15,
+      "rpg": 8,
+      "apg": 2
+    },
+    {
+      "n": "Isaiah Hartenstein",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "yr": "2024–25",
+      "why": "Rebounding and connective passing from the center spot.",
+      "s": 45,
+      "d": 85,
+      "r": 87,
+      "p": 65,
+      "ppg": 11.2,
+      "rpg": 10.7,
+      "apg": 3.8
+    }
+  ],
+  "2020s_Cavaliers (2024–25)": [
+    {
+      "n": "Darius Garland",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "yr": "2024–25",
+      "why": "Skilled offensive creator who needs defensive support.",
+      "s": 83,
+      "d": 50,
+      "r": 28,
+      "p": 87,
+      "ppg": 20.6,
+      "rpg": 2.9,
+      "apg": 6.7
+    },
+    {
+      "n": "Donovan Mitchell",
+      "pos": "PG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "yr": "2024–25",
+      "why": "Go-to perimeter scorer with secondary playmaking.",
+      "s": 91,
+      "d": 70,
+      "r": 41,
+      "p": 78,
+      "ppg": 24,
+      "rpg": 4.5,
+      "apg": 5
+    },
+    {
+      "n": "Max Strus",
+      "pos": "SG",
+      "slots": [
+        "SG",
+        "SF"
+      ],
+      "yr": "2024–25",
+      "why": "Complementary wing with passing and modest scoring.",
+      "s": 46,
+      "d": 61,
+      "r": 42,
+      "p": 53,
+      "ppg": 9.4,
+      "rpg": 4.3,
+      "apg": 3.2
+    },
+    {
+      "n": "Evan Mobley",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "2024–25",
+      "why": "Versatile defensive anchor with developing offense.",
+      "s": 74,
+      "d": 98,
+      "r": 83,
+      "p": 54,
+      "ppg": 18.5,
+      "rpg": 9.3,
+      "apg": 3.2
+    },
+    {
+      "n": "Jarrett Allen",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "yr": "2024–25",
+      "why": "Interior defense, finishing, and reliable rebounding.",
+      "s": 54,
+      "d": 87,
+      "r": 85,
+      "p": 30,
+      "ppg": 13.5,
+      "rpg": 9.7,
+      "apg": 1.9
+    }
+  ],
+  "2020s_Knicks (2024–25)": [
+    {
+      "n": "Jalen Brunson",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "yr": "2024–25",
+      "why": "Elite scoring and creation from the lead guard.",
+      "s": 94,
+      "d": 49,
+      "r": 27,
+      "p": 91,
+      "ppg": 26,
+      "rpg": 2.9,
+      "apg": 7.3
+    },
+    {
+      "n": "Mikal Bridges",
+      "pos": "SG",
+      "slots": [
+        "SG",
+        "SF"
+      ],
+      "yr": "2024–25",
+      "why": "Two-way wing with complementary scoring.",
+      "s": 74,
+      "d": 78,
+      "r": 31,
+      "p": 59,
+      "ppg": 17.6,
+      "rpg": 3.2,
+      "apg": 3.7
+    },
+    {
+      "n": "OG Anunoby",
+      "pos": "SF",
+      "slots": [
+        "SF",
+        "PF"
+      ],
+      "yr": "2024–25",
+      "why": "Strong wing defense paired with efficient scoring.",
+      "s": 73,
+      "d": 93,
+      "r": 46,
+      "p": 38,
+      "ppg": 18,
+      "rpg": 4.8,
+      "apg": 2.2
+    },
+    {
+      "n": "Josh Hart",
+      "pos": "SG",
+      "slots": [
+        "SG",
+        "SF",
+        "PF"
+      ],
+      "yr": "2024–25",
+      "why": "Rebounding and passing help tie the lineup together.",
+      "s": 55,
+      "d": 80,
+      "r": 85,
+      "p": 76,
+      "ppg": 13.6,
+      "rpg": 9.6,
+      "apg": 5.9
+    },
+    {
+      "n": "Karl-Anthony Towns",
+      "pos": "PF",
+      "slots": [
+        "PF",
+        "C"
+      ],
+      "yr": "2024–25",
+      "why": "High-scoring big and elite rebounder with defensive tradeoffs.",
+      "s": 92,
+      "d": 60,
+      "r": 95,
+      "p": 51,
+      "ppg": 24.4,
+      "rpg": 12.8,
+      "apg": 3.1
+    }
+  ],
+  "2020s_Timberwolves (2024–25)": [
+    {
+      "n": "Mike Conley",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "yr": "2024–25",
+      "why": "Veteran organizer with a smaller scoring role.",
+      "s": 35,
+      "d": 67,
+      "r": 25,
+      "p": 72,
+      "ppg": 8.2,
+      "rpg": 2.6,
+      "apg": 4.5
+    },
+    {
+      "n": "Anthony Edwards",
+      "pos": "SG",
+      "slots": [
+        "SG",
+        "SF"
+      ],
+      "yr": "2024–25",
+      "why": "Explosive perimeter scorer with two-way potential.",
+      "s": 96,
+      "d": 78,
+      "r": 52,
+      "p": 70,
+      "ppg": 27.6,
+      "rpg": 5.7,
+      "apg": 4.5
+    },
+    {
+      "n": "Jaden McDaniels",
+      "pos": "SF",
+      "slots": [
+        "SF",
+        "PF"
+      ],
+      "yr": "2024–25",
+      "why": "Long defensive forward for difficult wing matchups.",
+      "s": 51,
+      "d": 92,
+      "r": 55,
+      "p": 35,
+      "ppg": 12.2,
+      "rpg": 5.7,
+      "apg": 2
+    },
+    {
+      "n": "Julius Randle",
+      "pos": "PF",
+      "slots": [
+        "PF"
+      ],
+      "yr": "2024–25",
+      "why": "Scoring forward with secondary creation.",
+      "s": 76,
+      "d": 55,
+      "r": 67,
+      "p": 69,
+      "ppg": 18.7,
+      "rpg": 7.1,
+      "apg": 4.7
+    },
+    {
+      "n": "Rudy Gobert",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "yr": "2024–25",
+      "why": "Rim protection and rebounding to anchor the defense.",
+      "s": 45,
+      "d": 95,
+      "r": 89,
+      "p": 28,
+      "ppg": 12,
+      "rpg": 10.9,
+      "apg": 1.8
+    }
+  ]
+};
+Object.assign(CHALLENGE_PLAYERS, TEAM_EXPANSION, {
+  "2020s_Nets": [
+    {
+      "n": "Kyrie Irving",
+      "pos": "PG/SG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "s": 94,
+      "d": 50,
+      "r": 35,
+      "p": 82,
+      "ppg": 27.4,
+      "rpg": 4.4,
+      "apg": 5.8,
+      "yr": "2021–22",
+      "why": "Elite shot creation and scoring."
+    },
+    {
+      "n": "Bruce Brown",
+      "pos": "SG/SF",
+      "slots": [
+        "SG",
+        "SF"
+      ],
+      "s": 55,
+      "d": 78,
+      "r": 49,
+      "p": 51,
+      "ppg": 9,
+      "rpg": 4.8,
+      "apg": 2.1,
+      "yr": "2021–22",
+      "why": "Defensive support on the wing."
+    },
+    {
+      "n": "Kevin Durant",
+      "pos": "SF/PF",
+      "slots": [
+        "SF",
+        "PF"
+      ],
+      "s": 98,
+      "d": 74,
+      "r": 64,
+      "p": 83,
+      "ppg": 29.9,
+      "rpg": 7.4,
+      "apg": 6.4,
+      "yr": "2021–22",
+      "why": "Efficient scoring with secondary creation."
+    },
+    {
+      "n": "Blake Griffin",
+      "pos": "PF",
+      "slots": [
+        "PF"
+      ],
+      "s": 44,
+      "d": 54,
+      "r": 46,
+      "p": 48,
+      "ppg": 6.4,
+      "rpg": 4.1,
+      "apg": 1.9,
+      "yr": "2021–22",
+      "why": "A supporting frontcourt option."
+    },
+    {
+      "n": "Nicolas Claxton",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "s": 51,
+      "d": 80,
+      "r": 65,
+      "p": 25,
+      "ppg": 8.7,
+      "rpg": 5.6,
+      "apg": 0.9,
+      "yr": "2021–22",
+      "why": "Mobile interior defense."
+    }
+  ],
+  "2020s_Pacers": [
+    {
+      "n": "Tyrese Haliburton",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "s": 81,
+      "d": 59,
+      "r": 33,
+      "p": 97,
+      "ppg": 18.6,
+      "rpg": 3.5,
+      "apg": 9.2,
+      "yr": "2024–25",
+      "why": "Lead creator for a flowing offense."
+    },
+    {
+      "n": "Andrew Nembhard",
+      "pos": "PG/SG",
+      "slots": [
+        "PG",
+        "SG"
+      ],
+      "s": 59,
+      "d": 79,
+      "r": 34,
+      "p": 75,
+      "ppg": 10,
+      "rpg": 3.3,
+      "apg": 5,
+      "yr": "2024–25",
+      "why": "Defense and a second ball handler."
+    },
+    {
+      "n": "Aaron Nesmith",
+      "pos": "SF",
+      "slots": [
+        "SF"
+      ],
+      "s": 65,
+      "d": 77,
+      "r": 42,
+      "p": 31,
+      "ppg": 12,
+      "rpg": 4,
+      "apg": 1.2,
+      "yr": "2024–25",
+      "why": "Wing defense and supporting scoring."
+    },
+    {
+      "n": "Pascal Siakam",
+      "pos": "PF",
+      "slots": [
+        "PF"
+      ],
+      "s": 83,
+      "d": 76,
+      "r": 65,
+      "p": 62,
+      "ppg": 20.2,
+      "rpg": 6.9,
+      "apg": 3.4,
+      "yr": "2024–25",
+      "why": "Versatile frontcourt scoring."
+    },
+    {
+      "n": "Myles Turner",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "s": 74,
+      "d": 85,
+      "r": 68,
+      "p": 34,
+      "ppg": 15.6,
+      "rpg": 6.5,
+      "apg": 1.5,
+      "yr": "2024–25",
+      "why": "Rim protection with scoring touch."
+    }
+  ],
+  "2010s_Wizards": [
+    {
+      "n": "John Wall",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "s": 87,
+      "d": 78,
+      "r": 38,
+      "p": 98,
+      "ppg": 23.1,
+      "rpg": 4.2,
+      "apg": 10.7,
+      "yr": "2016–17",
+      "why": "High-volume creation and transition speed."
+    },
+    {
+      "n": "Bradley Beal",
+      "pos": "SG",
+      "slots": [
+        "SG"
+      ],
+      "s": 87,
+      "d": 56,
+      "r": 29,
+      "p": 63,
+      "ppg": 23.1,
+      "rpg": 3.1,
+      "apg": 3.5,
+      "yr": "2016–17",
+      "why": "A scoring partner in the backcourt."
+    },
+    {
+      "n": "Otto Porter",
+      "pos": "SF",
+      "slots": [
+        "SF"
+      ],
+      "s": 73,
+      "d": 79,
+      "r": 62,
+      "p": 36,
+      "ppg": 13.4,
+      "rpg": 6.4,
+      "apg": 1.5,
+      "yr": "2016–17",
+      "why": "A useful two-way wing."
+    },
+    {
+      "n": "Markieff Morris",
+      "pos": "PF",
+      "slots": [
+        "PF"
+      ],
+      "s": 69,
+      "d": 65,
+      "r": 64,
+      "p": 39,
+      "ppg": 14,
+      "rpg": 6.5,
+      "apg": 1.7,
+      "yr": "2016–17",
+      "why": "Physical frontcourt support."
+    },
+    {
+      "n": "Marcin Gortat",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "s": 59,
+      "d": 73,
+      "r": 87,
+      "p": 34,
+      "ppg": 10.8,
+      "rpg": 10.4,
+      "apg": 1.5,
+      "yr": "2016–17",
+      "why": "Rebounding and interior finishing."
+    }
+  ],
+  "2010s_Clippers": [
+    {
+      "n": "Chris Paul",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "s": 84,
+      "d": 89,
+      "r": 40,
+      "p": 99,
+      "ppg": 19.1,
+      "rpg": 4.3,
+      "apg": 10.7,
+      "yr": "2013–14",
+      "why": "Elite passing with disruptive guard defense."
+    },
+    {
+      "n": "J.J. Redick",
+      "pos": "SG",
+      "slots": [
+        "SG"
+      ],
+      "s": 77,
+      "d": 53,
+      "r": 20,
+      "p": 49,
+      "ppg": 15.2,
+      "rpg": 2.1,
+      "apg": 2.2,
+      "yr": "2013–14",
+      "why": "Off-ball scoring and shooting."
+    },
+    {
+      "n": "Matt Barnes",
+      "pos": "SF",
+      "slots": [
+        "SF"
+      ],
+      "s": 58,
+      "d": 74,
+      "r": 48,
+      "p": 46,
+      "ppg": 9.9,
+      "rpg": 4.6,
+      "apg": 2,
+      "yr": "2013–14",
+      "why": "Defensive effort on the wing."
+    },
+    {
+      "n": "Blake Griffin",
+      "pos": "PF",
+      "slots": [
+        "PF"
+      ],
+      "s": 91,
+      "d": 65,
+      "r": 85,
+      "p": 68,
+      "ppg": 24.1,
+      "rpg": 9.5,
+      "apg": 3.9,
+      "yr": "2013–14",
+      "why": "Power scoring and frontcourt creation."
+    },
+    {
+      "n": "DeAndre Jordan",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "s": 60,
+      "d": 90,
+      "r": 97,
+      "p": 20,
+      "ppg": 10.4,
+      "rpg": 13.6,
+      "apg": 0.9,
+      "yr": "2013–14",
+      "why": "Elite rebounding and rim protection."
+    }
+  ],
+  "2020s_Charlotte Hornets": [
+    {
+      "n": "LaMelo Ball",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "s": 88,
+      "d": 46,
+      "r": 44,
+      "p": 91,
+      "ppg": 25.2,
+      "rpg": 4.9,
+      "apg": 7.4,
+      "yr": "2024–25",
+      "why": "Scoring and passing with defensive tradeoffs."
+    },
+    {
+      "n": "Josh Green",
+      "pos": "SG/SF",
+      "slots": [
+        "SG",
+        "SF"
+      ],
+      "s": 45,
+      "d": 68,
+      "r": 28,
+      "p": 37,
+      "ppg": 7.4,
+      "rpg": 2.5,
+      "apg": 1.6,
+      "yr": "2024–25",
+      "why": "A defensive supporting wing."
+    },
+    {
+      "n": "Brandon Miller",
+      "pos": "SG/SF",
+      "slots": [
+        "SG",
+        "SF"
+      ],
+      "s": 83,
+      "d": 61,
+      "r": 45,
+      "p": 62,
+      "ppg": 21,
+      "rpg": 4.9,
+      "apg": 3.6,
+      "yr": "2024–25",
+      "why": "Young perimeter scoring."
+    },
+    {
+      "n": "Miles Bridges",
+      "pos": "SF/PF",
+      "slots": [
+        "SF",
+        "PF"
+      ],
+      "s": 81,
+      "d": 55,
+      "r": 70,
+      "p": 64,
+      "ppg": 20.3,
+      "rpg": 7.5,
+      "apg": 3.9,
+      "yr": "2024–25",
+      "why": "Scoring and rebounding from the forward spots."
+    },
+    {
+      "n": "Mark Williams",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "s": 70,
+      "d": 72,
+      "r": 87,
+      "p": 47,
+      "ppg": 15.2,
+      "rpg": 10.2,
+      "apg": 2.5,
+      "yr": "2024–25",
+      "why": "Interior finishing and rebounding."
+    }
+  ],
+  "2020s_Kings": [
+    {
+      "n": "De'Aaron Fox",
+      "pos": "PG",
+      "slots": [
+        "PG"
+      ],
+      "s": 90,
+      "d": 59,
+      "r": 39,
+      "p": 84,
+      "ppg": 25,
+      "rpg": 4.2,
+      "apg": 6.1,
+      "yr": "2022–23",
+      "why": "Quick scoring and lead-guard creation."
+    },
+    {
+      "n": "Kevin Huerter",
+      "pos": "SG",
+      "slots": [
+        "SG"
+      ],
+      "s": 76,
+      "d": 53,
+      "r": 33,
+      "p": 55,
+      "ppg": 15.2,
+      "rpg": 3.3,
+      "apg": 2.9,
+      "yr": "2022–23",
+      "why": "Supporting perimeter scoring."
+    },
+    {
+      "n": "Harrison Barnes",
+      "pos": "SF/PF",
+      "slots": [
+        "SF",
+        "PF"
+      ],
+      "s": 73,
+      "d": 60,
+      "r": 45,
+      "p": 38,
+      "ppg": 15,
+      "rpg": 4.5,
+      "apg": 1.6,
+      "yr": "2022–23",
+      "why": "Steady scoring on the wing."
+    },
+    {
+      "n": "Keegan Murray",
+      "pos": "SF/PF",
+      "slots": [
+        "SF",
+        "PF"
+      ],
+      "s": 67,
+      "d": 64,
+      "r": 46,
+      "p": 29,
+      "ppg": 12.2,
+      "rpg": 4.6,
+      "apg": 1.2,
+      "yr": "2022–23",
+      "why": "An off-ball forward option."
+    },
+    {
+      "n": "Domantas Sabonis",
+      "pos": "C",
+      "slots": [
+        "C"
+      ],
+      "s": 84,
+      "d": 61,
+      "r": 94,
+      "p": 90,
+      "ppg": 19.1,
+      "rpg": 12.3,
+      "apg": 7.3,
+      "yr": "2022–23",
+      "why": "Rebounding and passing through the post."
+    }
+  ]
+});
 Object.assign(DB, CHALLENGE_PLAYERS);
 const CHALLENGE_KEYS = Object.keys(CHALLENGE_PLAYERS);
 
@@ -1542,7 +3408,7 @@ function getOpenPositions(player) {
 }
 
 function canCompleteEraRoster(roster) {
-  const pool = ALL_KEYS.filter(k => parseKey(k).era === state.draftEra).flatMap(k => DB[k]);
+  const pool = ALL_KEYS.flatMap(k => DB[k]);
   const used = new Set(roster.filter(Boolean).map(p => p.n));
   const empty = POSITIONS.map((pos,i) => ({pos,i})).filter(({i}) => !roster[i]);
   function fill(index) {
@@ -1566,12 +3432,28 @@ function hasAvailablePlayer(key) {
 }
 
 function getPlayableKeys(filterFn) {
-  return ALL_KEYS.filter(key => (state.mode === 'era' ? parseKey(key).era === state.draftEra : !CHALLENGE_KEYS.includes(key)) && (!filterFn || filterFn(key)) && hasAvailablePlayer(key));
+  return ALL_KEYS.filter(key => (state.mode === 'era' || !CHALLENGE_KEYS.includes(key)) && (!filterFn || filterFn(key)) && hasAvailablePlayer(key));
 }
 
+function franchiseForKey(key) {
+  const team = parseKey(key).team.replace(/ \(.*\)$/, '');
+  return team === 'Royals' ? 'Kings' : team === 'Hornets' ? 'Pelicans' : team === 'Charlotte Hornets' ? 'Hornets' : team;
+}
+function poolLabel(key) {
+  return key.startsWith('2010s_Hornets') ? 'New Orleans Hornets (now Pelicans)' : parseKey(key).team;
+}
+function chooseDraftKey(keys) {
+  if (!keys.length) return null;
+  if (state.mode !== 'era') return keys[Math.floor(Math.random()*keys.length)];
+  // Give each available franchise equal weight, then pick one of its season pools.
+  const franchises = [...new Set(keys.map(franchiseForKey))];
+  const franchise = franchises[Math.floor(Math.random()*franchises.length)];
+  const pools = keys.filter(key => franchiseForKey(key) === franchise);
+  return pools[Math.floor(Math.random()*pools.length)];
+}
 function getRandomPlayableKey(filterFn) {
   const keys = getPlayableKeys(filterFn);
-  return keys.length ? keys[Math.floor(Math.random()*keys.length)] : null;
+  return chooseDraftKey(keys);
 }
 
 function canPlacePlayerAt(player, pos, fromIdx) {
@@ -1779,7 +3661,7 @@ function getSkipKeys(kind) {
   const { era, team } = parseKey(state.currentKey);
   return getPlayableKeys(key => {
     const candidate = parseKey(key);
-    return kind === 'era'
+    return state.mode === 'era' ? franchiseForKey(key) !== franchiseForKey(state.currentKey) : kind === 'era'
       ? candidate.team === team && candidate.era !== era
       : candidate.era === era && candidate.team !== team;
   });
@@ -1837,7 +3719,7 @@ function skip(kind) {
   }
   state[counter]--;
   clearPlacement();
-  state.currentKey = keys[Math.floor(Math.random() * keys.length)];
+  state.currentKey = chooseDraftKey(keys);
   const { era, team } = parseKey(state.currentKey);
   document.getElementById(kind + '-ct').textContent = '(used)';
   document.getElementById('slot-era-lbl').textContent = era;
@@ -2001,14 +3883,17 @@ function playerEraFit(p) {
 function playerRoles(p) {
   return [p.s>=80?'Scorer':null,p.d>=78?'Stopper':null,p.r>=85?'Rebounder':null,p.p>=85?'Creator':null].filter(Boolean);
 }
+const ERA_TARGETS = {
+  '1960s':[1,2,2,1], '1970s':[2,1,2,1], '1980s':[2,1,1,2],
+  '1990s':[2,3,1,1], '2000s':[2,2,1,1], '2010s':[2,1,1,2], '2020s':[2,2,1,2]
+};
 function rosterCoverage(roster) {
   const players = roster.filter(Boolean);
-  return [
-    {label:'2 scorers (SCR 80+)',met:players.filter(p=>p.s>=80).length>=2},
-    {label:'2 stoppers (DEF 78+)',met:players.filter(p=>p.d>=78).length>=2},
-    {label:'1 rebounder (REB 85+)',met:players.some(p=>p.r>=85)},
-    {label:'1 creator (PLY 85+)',met:players.some(p=>p.p>=85)}
-  ];
+  const targets = ERA_TARGETS[state.draftEra] || [2,2,1,1];
+  return [['s',80,'scorer','SCR'],['d',78,'stopper','DEF'],['r',85,'rebounder','REB'],['p',85,'creator','PLY']].map(([stat,min,role,label],i) => ({
+    label: targets[i]+' '+role+(targets[i]===1?'':'s')+' ('+label+' '+min+'+)',
+    met: players.filter(p=>p[stat]>=min).length>=targets[i]
+  }));
 }
 function setMode(mode) {
   if(state.round || state.spinning || state.currentKey) return;
@@ -2023,8 +3908,18 @@ function rollDraftEra() {
   document.getElementById('slot-era-lbl').textContent = state.draftEra;
   updateDraftControls();
 }
+function renderPoolDirectory() {
+  const keys = ALL_KEYS.filter(k => state.mode === 'era' || !CHALLENGE_KEYS.includes(k));
+  const count = keys.reduce((sum,k) => sum + DB[k].length, 0);
+  document.getElementById('pool-summary').textContent = 'Browse '+new Set(keys.map(franchiseForKey)).size+' franchises · '+keys.length+' team pools · '+count+' player seasons';
+  document.getElementById('pool-list').innerHTML = Object.keys(ERA_STYLES).map(era => {
+    const teams = keys.filter(k => parseKey(k).era === era).map(poolLabel);
+    return '<p><strong>'+era+' · '+teams.length+' teams</strong><br>'+teams.join(' · ')+'</p>';
+  }).join('');
+}
 function renderEraPanel() {
   const eraMode = state.mode === 'era';
+  renderPoolDirectory();
   const locked = Boolean(state.round || state.spinning || state.currentKey);
   for(const mode of ['era','classic']) {
     const button = document.getElementById(mode+'-mode-btn');
@@ -2035,19 +3930,19 @@ function renderEraPanel() {
   const roll = document.getElementById('roll-era-btn');
   roll.classList.toggle('hidden',!eraMode);
   roll.disabled = Boolean(state.draftEra) || locked;
-  roll.textContent = state.draftEra ? state.draftEra + ' · locked for this run' : 'Pick era · random';
+  roll.textContent = state.draftEra ? state.draftEra + ' · playstyle for this run' : 'Pick era · random';
   document.getElementById('skip-era-btn').classList.toggle('hidden',eraMode);
   document.getElementById('mode-description').textContent = eraMode
-    ? 'One era for all five picks. Your draft uses that era’s featured season pools, including seasons crossing a decade boundary.'
+    ? 'All 30 franchises and every featured season remain available. Your rolled era changes player fit and roster targets, not who you can draft.'
     : 'Original mixed-era draft and original simulation odds. One era skip and one team skip per run.';
   const style = ERA_STYLES[state.draftEra];
   if (!state.currentKey && !state.spinning && !state.roster.every(Boolean)) {
     document.getElementById('slot-instruction').textContent = eraMode
-      ? (state.draftEra ? 'Each spin reveals a franchise from your locked era. Pick a player who fills a role.' : 'Pick your era above, then spin for a franchise.')
+      ? (state.draftEra ? 'Each spin can reveal any franchise and player era. Pick someone who fits your rolled playstyle.' : 'Pick your era above, then spin for a franchise.')
       : 'Each spin reveals a franchise + era. You pick one player from that pool.';
   }
   document.getElementById('era-description').textContent = eraMode
-    ? (style ? state.draftEra+' · '+style.label+'. '+style.detail+' Each completed role target adds +2 overall. Strong teams reliably beat weaker opponents; only close matchups carry upset risk.' : 'Pick a random era before spinning. Your era stays locked until you play again.')
+    ? (style ? state.draftEra+' · '+style.label+'. '+style.detail+' Each completed role target adds +2 overall. Strong teams reliably beat weaker opponents; only close matchups carry upset risk.' : 'Pick a random playstyle era before spinning. All teams stay available; the playstyle lasts until you play again.')
     : 'Classic preserves the original challenge. Choose Era Challenge before drafting for team-fit bonuses and a varied schedule.';
   document.getElementById('fit-summary').textContent = eraMode && state.draftEra
     ? rosterCoverage(state.roster).map(c=>(c.met?'✓ ':'○ ')+c.label).join(' · ') + (state.roster.every(Boolean) ? ' · '+seasonOutlook(scoreRoster()) : '')
