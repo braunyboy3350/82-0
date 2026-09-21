@@ -47,7 +47,8 @@ for(const era of Object.keys(ERA_STYLES)){
    const keys=getPlayableKeys();
    assert(keys.length,'Dead-end draft in '+era);
    const key=keys[Math.floor(rng()*keys.length)];
-   const available=DB[key].filter(isPlayerAvailable);
+   const available=draftOptions(key,rng);
+   assert(available.length>0&&available.length<=3,'Invalid draft offer');
    const p=available[Math.floor(rng()*available.length)];
    const positions=getOpenPositions(p);
    const target=POSITIONS.indexOf(positions[Math.floor(rng()*positions.length)]);
@@ -61,15 +62,51 @@ for(const era of Object.keys(ERA_STYLES)){
  results.push({era,legalLineups:legal,strongLineupAverageWins:wins/1000,strongLineupPerfectSeasons:perfect+'/1000'});
 }
 state.mode='classic';state.draftEra=null;
-state.roster=ALL_KEYS.slice(0,5).map(k=>DB[k][0]);
+const allPlayers=Object.values(DB).flat();
+state.roster=[['Steve Nash','2004–05'],['LeBron James','2008–09'],['Larry Bird','1984–85'],['David Robinson','1993–94'],['Wilt Chamberlain','1961–62']]
+ .map(([name,year])=>allPlayers.find(p=>p.n===name&&p.yr===year));
+assert(state.roster.every((p,i)=>p&&canPlayerPlay(p,POSITIONS[i])),'User fixture missing or illegal');
 const c=scoreRoster();
-const original=c.scr*.28+c.def*.27+c.reb*.22+c.ply*.23;
-assert(Math.abs(c.raw-original)<1e-9,'Classic rating changed');
-assert(simulateSeason(c,rng).games.every(g=>Math.abs(g.chance-(original/100*.88+.06))<1e-9),'Classic odds changed');
+assert(c.bonus===8&&c.raw>=86,'User lineup not recognized as elite');
+for(let run=0;run<1000;run++)assert(simulateSeason(c,rng).w===82,'User lineup should dominate reliably');
 assert(challengeWinChance({raw:80},{rating:40})>challengeWinChance({raw:80},{rating:74}),'Opponent strength ignored');
 assert(challengeWinChance({raw:85},{rating:65})>challengeWinChance({raw:65},{rating:65}),'Roster strength ignored');
 assert(challengeWinChance({raw:86},{rating:74})===1,'Elite team should reliably win');
-assert(getPlayableKeys().every(k=>!CHALLENGE_KEYS.includes(k)),'Classic pool changed');
+state.roster=[null,null,null,null,null];
+assert(getPlayableKeys().length===48,'Classic expansion pools missing');
+assert(new Set(getPlayableKeys().map(franchiseForKey)).size===30,'Classic franchise missing');
+const exposed=new Set();
+for(let run=0;run<100;run++)for(const key of ALL_KEYS){
+ const offer=draftOptions(key,rng);
+ assert(offer.length>0&&offer.length<=3,'Offer size');
+ assert(new Set(offer.map(p=>p.n)).size===offer.length,'Duplicate in offer');
+ offer.forEach(p=>{assert(DB[key].includes(p)&&isPlayerAvailable(p),'Invalid offer');exposed.add(key+'|'+p.n);});
+}
+assert(exposed.size===215,'A player cannot appear in a draft offer');
+// A seeded greedy drafter should face meaningful scarcity without losing access to elite teams.
+let eliteDrafts=0,totalWins=0;
+const realRandom=Math.random;Math.random=rng;
+try {
+ for(let run=0;run<2000;run++){
+  state.roster=[null,null,null,null,null];
+  for(let pick=0;pick<5;pick++){
+   const offers=draftOptions(getRandomPlayableKey(),rng);
+   let best=null;
+   for(const p of offers)for(const pos of getOpenPositions(p)){
+    const before=state.roster,next=buildLineupWith(p,POSITIONS.indexOf(pos));
+    state.roster=next;const strength=scoreRoster().raw;state.roster=before;
+    if(!best||strength>best.strength)best={next,strength};
+   }
+   assert(best,'Classic draft dead end');state.roster=best.next;
+  }
+  assert(state.roster.every((p,i)=>canPlayerPlay(p,POSITIONS[i])),'Classic illegal position');
+  assert(new Set(state.roster.map(p=>p.n)).size===5,'Classic duplicate name');
+  const scores=scoreRoster();eliteDrafts+=scores.raw>=86;totalWins+=simulateSeason(scores,rng).w;
+ }
+} finally {Math.random=realRandom;}
+assert(eliteDrafts>20&&eliteDrafts<400,'Elite drafts should be possible but scarce');
+assert(totalWins/2000<81,'Ordinary drafts win too easily');
+results.push({era:'Classic',strongLineupAverageWins:82,strongLineupPerfectSeasons:'1000/1000',eliteDrafts:eliteDrafts+'/2000'});
 assert(ALL_KEYS.length===48,'Pool count');
 assert(Object.values(DB).flat().length===215,'Player-season count');
 for(const player of Object.values(DB).flat()){
@@ -80,6 +117,11 @@ for(const player of Object.values(DB).flat()){
 state.mode='era';state.roster=[null,null,null,null,null];
 state.currentKey=ALL_KEYS.find(k=>franchiseForKey(k)==='Lakers');
 assert(getSkipKeys('team').every(k=>franchiseForKey(k)!=='Lakers'),'Skip repeats franchise');
+state.mode='classic';state.roster=[null,null,null,null,null];
+state.currentKey=ALL_KEYS.find(k=>k.startsWith('2020s_Jazz'));
+assert(getSkipKeys('era').some(k=>k.startsWith('1990s_Jazz')),'Historical aliases break era skip');
+assert(getSkipKeys('team').every(k=>parseKey(k).era==='2020s'&&franchiseForKey(k)!=='Jazz'),'Team skip changed era or repeated franchise');
+state.mode='era';
 const passer={s:60,d:60,r:30,p:99};
 state.draftEra='1960s';const oldFit=playerEraFit(passer),oldTargets=rosterCoverage([]);
 state.draftEra='1980s';

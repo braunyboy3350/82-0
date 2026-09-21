@@ -848,7 +848,7 @@
     <div class="slot-machine" id="slot-machine">
       <div class="slot-era-label" id="slot-era-lbl">Ready</div>
       <div class="slot-main" id="slot-main">Spin to begin</div>
-      <div class="slot-instruction" id="slot-instruction">Each spin reveals a franchise + era. You pick one player from that pool.</div>
+      <div class="slot-instruction" id="slot-instruction">Each spin reveals a franchise + era and up to three eligible players. Choose one.</div>
     </div>
 
     <div class="btn-row">
@@ -3432,7 +3432,7 @@ function hasAvailablePlayer(key) {
 }
 
 function getPlayableKeys(filterFn) {
-  return ALL_KEYS.filter(key => (state.mode === 'era' || !CHALLENGE_KEYS.includes(key)) && (!filterFn || filterFn(key)) && hasAvailablePlayer(key));
+  return ALL_KEYS.filter(key => (!filterFn || filterFn(key)) && hasAvailablePlayer(key));
 }
 
 function franchiseForKey(key) {
@@ -3444,7 +3444,6 @@ function poolLabel(key) {
 }
 function chooseDraftKey(keys) {
   if (!keys.length) return null;
-  if (state.mode !== 'era') return keys[Math.floor(Math.random()*keys.length)];
   // Give each available franchise equal weight, then pick one of its season pools.
   const franchises = [...new Set(keys.map(franchiseForKey))];
   const franchise = franchises[Math.floor(Math.random()*franchises.length)];
@@ -3538,13 +3537,25 @@ function handleRosterSlotClick(slotIdx) {
   if (player) beginPlacement(player, null, slotIdx);
 }
 
+function draftOptions(key, rng = Math.random) {
+  const pool = DB[key].filter(isPlayerAvailable);
+  for (let i=pool.length-1; i>0; i--) {
+    const j = Math.floor(rng()*(i+1));
+    [pool[i],pool[j]] = [pool[j],pool[i]];
+  }
+  return pool.slice(0,3);
+}
 function showPlayers(key) {
-  const players = DB[key];
-  state.currentPlayers = players;
+  // Keep the offer fixed when moving a roster player or refreshing the panel.
+  if (state.offerKey !== key) {
+    state.currentPlayers = draftOptions(key);
+    state.offerKey = key;
+  }
+  const players = state.currentPlayers;
   const grid = document.getElementById('player-grid');
   const lbl = document.getElementById('player-section-lbl');
   const { era, team } = parseKey(key);
-  lbl.textContent = era + ' ' + team + ' — choose one';
+  lbl.textContent = era + ' ' + team + ' — choose one of '+players.length;
 
   grid.innerHTML = players.map((p,i) => {
     const openPositions = getOpenPositions(p);
@@ -3560,7 +3571,7 @@ function showPlayers(key) {
       <div class="pc-name">${p.n}</div>
       <div class="pc-meta">${eligiblePositions.join('/')} · ${p.yr}</div>
       <div class="pc-prime">${p.why}</div>
-      ${state.mode === 'era' ? `<div class="pc-fit">Era fit ${Math.round(playerEraFit(p))}/100 · ${playerRoles(p).join(' · ') || 'Supporting player'}</div>` : ''}
+      ${`<div class="pc-fit">${state.mode === 'era' ? 'Era fit '+Math.round(playerEraFit(p))+'/100 · ' : ''}${playerRoles(p).join(' · ') || 'Supporting player'}</div>`}
       ${posButtons}
       <div class="stat-row">
         <span class="stat-lbl">SCR</span>
@@ -3662,8 +3673,8 @@ function getSkipKeys(kind) {
   return getPlayableKeys(key => {
     const candidate = parseKey(key);
     return state.mode === 'era' ? franchiseForKey(key) !== franchiseForKey(state.currentKey) : kind === 'era'
-      ? candidate.team === team && candidate.era !== era
-      : candidate.era === era && candidate.team !== team;
+      ? franchiseForKey(key) === franchiseForKey(state.currentKey) && candidate.era !== era
+      : candidate.era === era && franchiseForKey(key) !== franchiseForKey(state.currentKey);
   });
 }
 
@@ -3697,13 +3708,14 @@ function afterRosterChanged(drafted) {
   }
   state.currentKey = null;
   state.currentPlayers = [];
+  state.offerKey = null;
   document.getElementById('player-section').classList.add('hidden');
   document.getElementById('slot-machine').classList.remove('active');
   document.getElementById('spin-btn').innerHTML = '&#9654; Spin';
   if (!state.roster.every(Boolean)) {
     document.getElementById('slot-main').textContent = 'Spin to continue';
     document.getElementById('slot-era-lbl').textContent = 'Round ' + (state.round+1);
-    document.getElementById('slot-instruction').textContent = 'Each spin reveals a franchise + era. You pick one player from that pool.';
+    document.getElementById('slot-instruction').textContent = 'Each spin reveals a franchise + era and up to three eligible players. Choose one.';
   }
   updateDraftControls();
 }
@@ -3747,8 +3759,8 @@ function scoreRoster() {
   const base = (scr * 0.28) + (def * 0.27) + (reb * 0.22) + (ply * 0.23);
   const fit = r.reduce((sum,p) => sum + (p ? playerEraFit(p) : 0), 0) / 5;
   const coverage = rosterCoverage(r);
-  const bonus = state.mode === 'era' ? coverage.filter(c => c.met).length * 2 : 0;
-  const raw = state.mode === 'era' ? base * 0.6 + fit * 0.4 + bonus : base;
+  const bonus = coverage.filter(c => c.met).length * 2;
+  const raw = state.mode === 'era' ? base * 0.6 + fit * 0.4 + bonus : base + bonus;
   const weaknesses = [];
   if (def < 60) weaknesses.push('Defensive liability — opponents will shoot freely.');
   if (reb < 55) weaknesses.push('Rebounding gap — second-chance points will pile up.');
@@ -3808,7 +3820,7 @@ function showResult(result, scores) {
     S: 'Perfection. This prime-year lineup goes down as the greatest team ever assembled. A complete team, a great run, and all 82 wins.',
     A: 'Historic season. A legitimate 82-0 challenger — a few bad beats away from perfection.',
     B: 'Elite squad. Dominant for stretches but not quite bulletproof. Postseason contender.',
-    C: 'Solid roster. Some gaps in construction showed up over a long season. Playoff-bound.',
+    C: 'Competitive season. Check the role targets and opponent matchups to see where this lineup can improve.',
     D: 'Tough draw. The spin machine did not cooperate. Rebuild and try again.',
   };
   document.getElementById('result-verdict').textContent = verdicts[grade];
@@ -3848,7 +3860,7 @@ function showResult(result, scores) {
   ).join('');
   document.getElementById('result-fit').textContent = state.mode === 'era'
     ? state.draftEra+' · '+ERA_STYLES[state.draftEra].label+' · Team-fit bonus +'+scores.bonus+' · Overall '+scores.raw.toFixed(1)+'. Opponent strengths are game ratings; this is a fantasy schedule across eras.'
-    : 'Classic · Original simulation odds · Overall '+scores.raw.toFixed(1);
+    : 'Classic · Team-fit bonus +'+scores.bonus+' · Overall '+scores.raw.toFixed(1)+'. Opponent strengths are game ratings; this is a fantasy schedule across eras.';
 }
 
 function gradeLabel(g) {
@@ -3889,7 +3901,7 @@ const ERA_TARGETS = {
 };
 function rosterCoverage(roster) {
   const players = roster.filter(Boolean);
-  const targets = ERA_TARGETS[state.draftEra] || [2,2,1,1];
+  const targets = (state.mode === 'era' && ERA_TARGETS[state.draftEra]) || [2,2,1,1];
   return [['s',80,'scorer','SCR'],['d',78,'stopper','DEF'],['r',85,'rebounder','REB'],['p',85,'creator','PLY']].map(([stat,min,role,label],i) => ({
     label: targets[i]+' '+role+(targets[i]===1?'':'s')+' ('+label+' '+min+'+)',
     met: players.filter(p=>p[stat]>=min).length>=targets[i]
@@ -3909,7 +3921,7 @@ function rollDraftEra() {
   updateDraftControls();
 }
 function renderPoolDirectory() {
-  const keys = ALL_KEYS.filter(k => state.mode === 'era' || !CHALLENGE_KEYS.includes(k));
+  const keys = ALL_KEYS;
   const count = keys.reduce((sum,k) => sum + DB[k].length, 0);
   document.getElementById('pool-summary').textContent = 'Browse '+new Set(keys.map(franchiseForKey)).size+' franchises · '+keys.length+' team pools · '+count+' player seasons';
   document.getElementById('pool-list').innerHTML = Object.keys(ERA_STYLES).map(era => {
@@ -3933,18 +3945,18 @@ function renderEraPanel() {
   roll.textContent = state.draftEra ? state.draftEra + ' · playstyle for this run' : 'Pick era · random';
   document.getElementById('skip-era-btn').classList.toggle('hidden',eraMode);
   document.getElementById('mode-description').textContent = eraMode
-    ? 'All 30 franchises and every featured season remain available. Your rolled era changes player fit and roster targets, not who you can draft.'
-    : 'Original mixed-era draft and original simulation odds. One era skip and one team skip per run.';
+    ? 'All 30 franchises and every featured season remain available. Choose from up to three random eligible players per spin. Your era changes fit and roster targets.'
+    : 'All 30 franchises. Each spin offers up to three random eligible players. Build complementary roles; dominant lineups can go 82–0. One era skip and one team skip per run.';
   const style = ERA_STYLES[state.draftEra];
   if (!state.currentKey && !state.spinning && !state.roster.every(Boolean)) {
     document.getElementById('slot-instruction').textContent = eraMode
       ? (state.draftEra ? 'Each spin can reveal any franchise and player era. Pick someone who fits your rolled playstyle.' : 'Pick your era above, then spin for a franchise.')
-      : 'Each spin reveals a franchise + era. You pick one player from that pool.';
+      : 'Each spin reveals a franchise + era and up to three eligible players. Choose one.';
   }
   document.getElementById('era-description').textContent = eraMode
     ? (style ? state.draftEra+' · '+style.label+'. '+style.detail+' Each completed role target adds +2 overall. Strong teams reliably beat weaker opponents; only close matchups carry upset risk.' : 'Pick a random playstyle era before spinning. All teams stay available; the playstyle lasts until you play again.')
-    : 'Classic preserves the original challenge. Choose Era Challenge before drafting for team-fit bonuses and a varied schedule.';
-  document.getElementById('fit-summary').textContent = eraMode && state.draftEra
+    : 'Classic rewards a balanced lineup: scorers, defenders, rebounding, and playmaking. Each completed role target adds +2 overall. Dominant teams beat weaker opponents reliably.';
+  document.getElementById('fit-summary').textContent = !eraMode || state.draftEra
     ? rosterCoverage(state.roster).map(c=>(c.met?'✓ ':'○ ')+c.label).join(' · ') + (state.roster.every(Boolean) ? ' · '+seasonOutlook(scoreRoster()) : '')
     : '';
 }
@@ -3970,9 +3982,8 @@ function simulateSeason(scores, rng = Math.random) {
     schedule.push(...block);
   }
   for(let i=0;i<82;i++) {
-    const classic = state.mode === 'classic';
-    const opponent = classic ? {name:OPPONENTS[Math.floor(rng()*OPPONENTS.length)],rating:60,tier:'Classic'} : schedule[i];
-    const chance = classic ? (scores.raw/100)*.88+.06 : challengeWinChance(scores,opponent);
+    const opponent = schedule[i];
+    const chance = challengeWinChance(scores,opponent);
     const won = rng()<chance;
     const margin = won ? Math.ceil(rng()*14+1) : -Math.ceil(rng()*10+1);
     games.push({g:i+1,opp:opponent.name,rating:opponent.rating,tier:opponent.tier,chance,won,margin});
@@ -3983,14 +3994,14 @@ function simulateSeason(scores, rng = Math.random) {
 // ─── RESET ───────────────────────────────────────────────────────────────────
 function resetGame() {
   clearInterval(state.spinInterval);
-  state = { mode:state.mode || 'era', draftEra:null, round:0, roster:[null,null,null,null,null], currentKey:null, currentPlayers:[], eraSkips:1, teamSkips:1, spinning:false, spinInterval:null, pendingPlayer:null, pendingPlayerIdx:null, pendingFromIdx:null };
+  state = { mode:state.mode || 'era', draftEra:null, round:0, roster:[null,null,null,null,null], currentKey:null, offerKey:null, currentPlayers:[], eraSkips:1, teamSkips:1, spinning:false, spinInterval:null, pendingPlayer:null, pendingPlayerIdx:null, pendingFromIdx:null };
   document.getElementById('screen-result').classList.add('hidden');
   document.getElementById('screen-sim').classList.add('hidden');
   document.getElementById('screen-draft').classList.remove('hidden');
   document.getElementById('player-section').classList.add('hidden');
   document.getElementById('slot-main').textContent = 'Spin to begin';
   document.getElementById('slot-era-lbl').textContent = 'Ready';
-  document.getElementById('slot-instruction').textContent = 'Each spin reveals a franchise + era. You pick one player from that pool.';
+  document.getElementById('slot-instruction').textContent = 'Each spin reveals a franchise + era and up to three eligible players. Choose one.';
   document.getElementById('slot-machine').classList.remove('active');
   document.getElementById('spin-btn').innerHTML = '&#9654; Spin';
   document.getElementById('spin-btn').disabled = false;
